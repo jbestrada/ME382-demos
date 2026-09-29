@@ -60,6 +60,7 @@ section{background:var(--panel);border:1px solid var(--rule);border-radius:10px;
 .ctl label{display:flex;justify-content:space-between;font-variant-numeric:tabular-nums}
 .ctl label span:last-child{color:var(--muted)}
 input[type=range]{width:100%;accent-color:var(--a)}
+input[type=number],input[type=text]{width:100%;padding:6px;border:1px solid var(--rule);border-radius:6px;background:var(--panel);color:var(--body)}
 .chk{display:flex;align-items:center;gap:6px;margin:4px 0 10px}
 .presets{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0 14px}
 .presets button{
@@ -118,7 +119,22 @@ input[type=range]{width:100%;accent-color:var(--a)}
             <option value="fcc">FCC</option>
             <option value="hcp">Hexagonal close-packed (HCP)</option>
             <option value="diamond">Diamond cubic</option>
+            <option value="binary-rocksalt">NaCl · rock salt</option>
+            <option value="binary-cscl">CsCl · B2</option>
+            <option value="binary-zincblende">ZnS · zincblende</option>
+            <option value="binary-wurtzite">ZnO · wurtzite</option>
           </select>
+        </div>
+
+        <div id="binaryControls" hidden>
+          <div class="ctl"><label><span>Species A</span></label><input id="speciesALabel" type="text" value="Na+" maxlength="12"></div>
+          <div class="ctl"><label><span>Radius of A (Å)</span></label><input id="radiusA" type="number" min="0.1" max="5" step="0.01" value="1.02"></div>
+          <div class="ctl"><label><span>Molar mass of A (g/mol)</span></label><input id="massA" type="number" min="1" max="300" step="0.001" value="22.990"></div>
+          <div class="ctl"><label><span>Color of A</span><span><input id="colorA" type="color" value="#3d7ea6"></span></label></div>
+          <div class="ctl"><label><span>Species B</span></label><input id="speciesBLabel" type="text" value="Cl-" maxlength="12"></div>
+          <div class="ctl"><label><span>Radius of B (Å)</span></label><input id="radiusB" type="number" min="0.1" max="5" step="0.01" value="1.81"></div>
+          <div class="ctl"><label><span>Molar mass of B (g/mol)</span></label><input id="massB" type="number" min="1" max="300" step="0.001" value="35.450"></div>
+          <div class="ctl"><label><span>Color of B</span><span><input id="colorB" type="color" value="#d97a2b"></span></label></div>
         </div>
 
         <p id="indexHint" class="given">Cubic structures use Miller indices (h k l).</p>
@@ -158,7 +174,13 @@ input[type=range]{width:100%;accent-color:var(--a)}
     <div class="legend" aria-label="Visualization legend">
       <span><i style="background:#2e8a55"></i>Plane within the unit cell</span>
       <span><i style="background:#ffc857"></i>Cross-sections through atoms</span>
+      <span id="speciesLegend" hidden><i id="speciesASwatch"></i><span id="speciesALegend"></span><i id="speciesBSwatch"></i><span id="speciesBLegend"></span></span>
     </div>
+  </section>
+
+  <section id="structureInfoSection">
+    <h2>Radius derivation and packing</h2>
+    <div id="structureInfo"></div>
   </section>
 
   <p class="foot">View the <a href="https://github.com/jbestrada/ME382-demos">source code on GitHub</a>.</p>
@@ -170,6 +192,48 @@ import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 
 const $ = id => document.getElementById(id);
 const HCP_C_OVER_A = Math.sqrt(8 / 3);
+const BINARY_STRUCTURES = {
+  'binary-rocksalt': {
+    name: 'NaCl (rock salt)',
+    prototype: 'rock salt',
+    formulaUnits: 4,
+    plane: [1, 0, 0],
+    defaults: ['Na+', 1.02, 22.990, 'Cl-', 1.81, 35.450],
+    latticeParameter: (a, b) => 2 * (a + b),
+    volume: a => a ** 3,
+    relation: 'Nearest unlike neighbors touch along a cube edge: a = 2(rA + rB).'
+  },
+  'binary-cscl': {
+    name: 'CsCl (B2)',
+    prototype: 'B2 (CsCl)',
+    formulaUnits: 1,
+    plane: [1, 1, 0],
+    defaults: ['Cs+', 1.74, 132.905, 'Cl-', 1.81, 35.450],
+    latticeParameter: (a, b) => 2 * (a + b) / Math.sqrt(3),
+    volume: a => a ** 3,
+    relation: 'Nearest unlike neighbors touch along a body diagonal: √3 a = 2(rA + rB).'
+  },
+  'binary-zincblende': {
+    name: 'ZnS (zincblende)',
+    prototype: 'zincblende',
+    formulaUnits: 4,
+    plane: [1, 1, 0],
+    defaults: ['Zn²⁺', 0.60, 65.380, 'S²⁻', 1.84, 32.060],
+    latticeParameter: (a, b) => 4 * (a + b) / Math.sqrt(3),
+    volume: a => a ** 3,
+    relation: 'Nearest unlike neighbors touch along a quarter body diagonal: √3 a / 4 = rA + rB.'
+  },
+  'binary-wurtzite': {
+    name: 'ZnO (wurtzite)',
+    prototype: 'wurtzite',
+    formulaUnits: 6,
+    plane: [1, 0, 0],
+    defaults: ['Zn²⁺', 0.60, 65.380, 'O²⁻', 1.38, 15.999],
+    latticeParameter: (a, b) => Math.sqrt(8 / 3) * (a + b),
+    volume: a => 3 * Math.sqrt(3) / 2 * a ** 2 * HCP_C_OVER_A * a,
+    relation: 'Ideal tetrahedral coordination: √(3/8) a = rA + rB, with c/a = √(8/3) and u = 3/8.'
+  }
+};
 const radiusPlanes = {
   sc: { indices: [1, 0, 0], label: '(100)', relation: '2r = a (nearest neighbors along a cube edge).' },
   bcc: { indices: [1, 1, 0], label: '(110)', relation: '4r = √3 a (the body-diagonal contact row lies in this plane).' },
@@ -180,6 +244,67 @@ const radiusPlanes = {
 
 /* ---------- lattice generation ---------- */
 function generateAtoms(structure) {
+  if (structure.startsWith('binary-')) {
+    const corners = [
+      [0,0,0],[1,0,0],[0,1,0],[0,0,1],
+      [1,1,0],[1,0,1],[0,1,1],[1,1,1]
+    ];
+    const fcc = [
+      ...corners.map(pos => ({ pos, type: 'A' })),
+      ...[[0.5,0.5,0],[0.5,0,0.5],[0,0.5,0.5],
+        [0.5,0.5,1],[0.5,1,0.5],[1,0.5,0.5]]
+        .map(pos => ({ pos, type: 'A' }))
+    ];
+    if (structure === 'binary-cscl') {
+      return [
+        ...corners.map(pos => ({ pos, type: 'A' })),
+        { pos: [0.5,0.5,0.5], type: 'B' }
+      ];
+    }
+    if (structure === 'binary-rocksalt') {
+      return [
+        ...fcc,
+        ...[[0.5,0,0],[0.5,1,0],[0.5,0,1],[0.5,1,1],
+          [0,0.5,0],[1,0.5,0],[0,0.5,1],[1,0.5,1],
+          [0,0,0.5],[1,0,0.5],[0,1,0.5],[1,1,0.5],
+          [0.5,0.5,0.5]]
+          .map(pos => ({ pos, type: 'B' }))
+      ];
+    }
+    if (structure === 'binary-zincblende') {
+      return [
+        ...fcc,
+        ...[[0.25,0.25,0.25],[0.25,0.75,0.75],
+          [0.75,0.25,0.75],[0.75,0.75,0.25]]
+          .map(pos => ({ pos, type: 'B' }))
+      ];
+    }
+    const hcp = generateAtoms('hcp');
+    const seen = new Set();
+    const shifted = hcp.map(({ pos }) => {
+      const z = ((pos[2] + 3/8) % 1 + 1) % 1;
+      return { pos: [pos[0], pos[1], z], type: 'B' };
+    }).filter(({ pos }) => {
+      const key = pos.map(value => value.toFixed(8)).join(',');
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+    return [...hcp.map(atom => ({ ...atom, type: 'A' })), ...shifted];
+  }
+
+  if (structure === 'hcp') {
+    const atoms = [];
+    const hexCorners = [[1,0],[1,1],[0,1],[-1,0],[-1,-1],[0,-1]];
+    for (const z of [0, 1]) {
+      hexCorners.forEach(([u, v]) => atoms.push({ pos: [u, v, z], type: 'corner' }));
+      atoms.push({ pos: [0, 0, z], type: 'corner' });
+    }
+    [[2/3,1/3],[-1/3,1/3],[-1/3,-2/3]]
+      .forEach(([u, v]) => atoms.push({ pos: [u, v, 0.5], type: 'body' }));
+    return atoms;
+  }
+
   const corners = [
     [0,0,0],[1,0,0],[0,1,0],[0,0,1],
     [1,1,0],[1,0,1],[0,1,1],[1,1,1]
@@ -200,20 +325,108 @@ function generateAtoms(structure) {
      [0.5,0.5,1],[0.5,1,0.5],[1,0.5,0.5]]
       .forEach(p => atoms.push({ pos: p, type: 'face' }));
   }
-  if (structure === 'hcp') {
-    const hexCorners = [[1,0],[1,1],[0,1],[-1,0],[-1,-1],[0,-1]];
-    for (const z of [0, 1]) {
-      hexCorners.forEach(([u, v]) => atoms.push({ pos: [u, v, z], type: 'corner' }));
-      atoms.push({ pos: [0, 0, z], type: 'corner' });
-    }
-    [[2/3,1/3],[-1/3,1/3],[-1/3,-2/3]]
-      .forEach(([u, v]) => atoms.push({ pos: [u, v, 0.5], type: 'body' }));
-  }
   return atoms;
 }
 
+function readBinaryModel(structure) {
+  const config = BINARY_STRUCTURES[structure];
+  if (!config) return null;
+  const radiusA = +$('radiusA').value, radiusB = +$('radiusB').value;
+  const massA = +$('massA').value, massB = +$('massB').value;
+  const values = [radiusA, radiusB, massA, massB];
+  if (values.some(value => !Number.isFinite(value) || value <= 0)) {
+    return { error: 'Enter positive, finite values for both radii and molar masses.' };
+  }
+  const latticeParameter = config.latticeParameter(radiusA, radiusB);
+  const volume = config.volume(latticeParameter);
+  const formulaMass = massA + massB;
+  const density = config.formulaUnits * formulaMass /
+    (6.02214076e23 * volume * 1e-24);
+  const packingFraction = config.formulaUnits * (4 * Math.PI / 3) *
+    (radiusA ** 3 + radiusB ** 3) / volume;
+  return {
+    config,
+    radiusA,
+    radiusB,
+    massA,
+    massB,
+    latticeParameter,
+    radiusFractionA: radiusA / latticeParameter,
+    radiusFractionB: radiusB / latticeParameter,
+    density,
+    packingFraction
+  };
+}
+
+function escapeHtml(value) {
+  return value.replace(/[&<>"']/g, character => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+  })[character]);
+}
+
+function renderStructureInfo(structure, binary) {
+  const info = $('structureInfo');
+  if (binary?.error) {
+    info.innerHTML = `<p class="bad">${binary.error}</p>`;
+    return;
+  }
+  if (binary) {
+    const { config, radiusA, radiusB, massA, massB, latticeParameter, density, packingFraction } = binary;
+    const labelA = escapeHtml($('speciesALabel').value.trim() || 'A');
+    const labelB = escapeHtml($('speciesBLabel').value.trim() || 'B');
+    const volume = config.volume(latticeParameter);
+    info.innerHTML =
+      `<p><b>${config.name}</b> uses the ${config.prototype} prototype. ${config.relation}</p>` +
+      `<p>With the entered radii, <b>a = ${latticeParameter.toFixed(3)} Å</b>` +
+      `${structure === 'binary-wurtzite' ? ` and c = ${(HCP_C_OVER_A * latticeParameter).toFixed(3)} Å` : ''}.</p>` +
+      `<p>Radius ratios: r<sub>${labelA}</sub>/a = ${(radiusA / latticeParameter).toFixed(4)}; ` +
+      `r<sub>${labelB}</sub>/a = ${(radiusB / latticeParameter).toFixed(4)}.</p>` +
+      `<p>There are ${config.formulaUnits} formula units per displayed unit cell, so ` +
+      `ρ = [Z(M<sub>${labelA}</sub> + M<sub>${labelB}</sub>)/N<sub>A</sub>]/` +
+      `[V<sub>cell</sub> × 10<sup>−24</sup> cm³/Å³] = <b>${density.toFixed(3)} g/cm³</b>. ` +
+      `Using M<sub>${labelA}</sub> = ${massA.toFixed(3)} and M<sub>${labelB}</sub> = ${massB.toFixed(3)} g/mol, ` +
+      `V<sub>cell</sub> = ${volume.toFixed(3)} Å³, and 1 Å³ = 10<sup>−24</sup> cm³.</p>` +
+      `<p>Hard-sphere packing fraction = Z(4π/3)(r<sub>${labelA}</sub>³ + r<sub>${labelB}</sub>³)/V<sub>cell</sub> ` +
+      `= <b>${(100 * packingFraction).toFixed(2)}%</b>. ` +
+      `The model assumes the listed unlike neighbors touch; unusual radius ratios can imply sphere overlap.</p>`;
+    return;
+  }
+
+  const structures = {
+    sc: {
+      name: 'Simple cubic', relation: 'Nearest neighbors touch along the cube edge: a = 2r, hence r/a = 1/2.',
+      count: 1, ratio: 0.5, volume: 1, contact: 'a cube edge'
+    },
+    bcc: {
+      name: 'Body-centered cubic', relation: 'Nearest neighbors touch along the body diagonal: √3 a = 4r, hence r/a = √3/4.',
+      count: 2, ratio: Math.sqrt(3) / 4, volume: 1, contact: 'the body diagonal'
+    },
+    fcc: {
+      name: 'Face-centered cubic', relation: 'Nearest neighbors touch along the face diagonal: √2 a = 4r, hence r/a = √2/4.',
+      count: 4, ratio: Math.SQRT2 / 4, volume: 1, contact: 'a face diagonal'
+    },
+    hcp: {
+      name: 'Hexagonal close-packed', relation: 'Basal-plane neighbors touch: a = 2r, hence r/a = 1/2. For ideal HCP, c/a = √(8/3).',
+      count: 6, ratio: 0.5, volume: 3 * Math.sqrt(3) / 2 * HCP_C_OVER_A, contact: 'the basal plane'
+    },
+    diamond: {
+      name: 'Diamond cubic', relation: 'Nearest neighbors are separated by one quarter of a body diagonal: 2r = √3 a/4, hence r/a = √3/8.',
+      count: 8, ratio: Math.sqrt(3) / 8, volume: 1, contact: 'a quarter body diagonal'
+    }
+  };
+  const data = structures[structure];
+  const packingFraction = data.count * (4 * Math.PI / 3) * data.ratio ** 3 / data.volume;
+  info.innerHTML =
+    `<p><b>${data.name}:</b> ${data.relation}</p>` +
+    `<p>The displayed cell contains ${data.count} atoms; its volume is ` +
+    `${structure === 'hcp' ? '3√3 a²c/2, with c/a = √(8/3)' : 'a³'}.</p>` +
+    `<p>Packing fraction = N(4πr³/3)/V<sub>cell</sub> = ` +
+    `${data.count}(4π/3)(${data.ratio.toFixed(4)}a)³/(${data.volume.toFixed(4)}a³) ` +
+    `= <b>${(100 * packingFraction).toFixed(2)}%</b>.</p>`;
+}
+
 function makeCell(structure) {
-  if (structure === 'hcp') {
+  if (structure === 'hcp' || structure === 'binary-wurtzite') {
     const corners = [[1,0],[1,1],[0,1],[-1,0],[-1,-1],[0,-1]];
     const vertices = [...corners.map(([u,v]) => [u,v,0]), ...corners.map(([u,v]) => [u,v,1])];
     const edges = [];
@@ -224,7 +437,7 @@ function makeCell(structure) {
       atoms: generateAtoms(structure),
       vertices,
       edges,
-      atomRadius: 0.5,
+      atomRadius: structure === 'hcp' ? 0.5 : null,
       toWorld: ([u, v, w]) => [u - v / 2, Math.sqrt(3) * v / 2, HCP_C_OVER_A * (w - 0.5)],
       orientedIndices: (h, k, l) => {
         const sign = orientationSign(h, k, l);
@@ -256,7 +469,7 @@ function makeCell(structure) {
     atoms: generateAtoms(structure),
     vertices,
     edges,
-    atomRadius: radii[structure],
+    atomRadius: radii[structure] ?? null,
     toWorld: pos => pos.map(value => value - 0.5),
     orientedIndices: (h, k, l) => {
       const sign = orientationSign(h, k, l);
@@ -378,11 +591,27 @@ scene.add(dl);
 
 const group = new THREE.Group();
 scene.add(group);
+const atomLayer = new THREE.Group();
+const overlayLayer = new THREE.Group();
+group.add(atomLayer, overlayLayer);
 
 let displayedStructure = null;
+let displayedAtomKey = null;
 const dot = (a, b) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
 const addScaled = (point, direction, scale) =>
   point.map((value, index) => value + direction[index] * scale);
+
+function clearGroup(target) {
+  while (target.children.length) {
+    const child = target.children[0];
+    target.remove(child);
+    child.traverse(object => {
+      object.geometry?.dispose();
+      const materials = Array.isArray(object.material) ? object.material : [object.material];
+      materials.forEach(material => material?.dispose());
+    });
+  }
+}
 
 function addAtomSection(atom, radius, h, k, l, frame, planeOrigin, cellPolygon) {
   const signedDistance = (h * atom.pos[0] + k * atom.pos[1] + l * atom.pos[2] - 1) / frame.length;
@@ -426,7 +655,7 @@ function addAtomSection(atom, radius, h, k, l, frame, planeOrigin, cellPolygon) 
   });
   const section = new THREE.Mesh(geometry, material);
   section.renderOrder = 2;
-  group.add(section);
+  overlayLayer.add(section);
   return true;
 }
 
@@ -439,42 +668,67 @@ function resize() {
 window.addEventListener('resize', resize);
 resize();
 
-const colors = { corner: 0x3d7ea6, body: 0xd97a2b, face: 0xd97a2b, diamond: 0x845ec2 };
+const colors = {
+  corner: 0x3d7ea6, body: 0xd97a2b, face: 0xd97a2b, diamond: 0x845ec2,
+  A: 0x3d7ea6, B: 0xd97a2b
+};
 
 function rebuildScene() {
-  while (group.children.length) {
-    const child = group.children[0];
-    group.remove(child);
-    child.traverse(object => {
-      object.geometry?.dispose();
-      const materials = Array.isArray(object.material) ? object.material : [object.material];
-      materials.forEach(material => material?.dispose());
-    });
-  }
+  clearGroup(overlayLayer);
 
   const structure = $('structure').value;
   const h = +$('h').value, k = +$('k').value, l = +$('l').value;
   $('hV').textContent = h; $('kV').textContent = k; $('lV').textContent = l;
+  const isBinary = Boolean(BINARY_STRUCTURES[structure]);
+  $('binaryControls').hidden = !isBinary;
+  $('speciesLegend').hidden = !isBinary;
+  $('structureInfoSection').querySelector('h2').textContent = isBinary
+    ? 'Binary-compound radii, packing, and density'
+    : 'Radius derivation and packing';
+  if (isBinary) {
+    $('speciesASwatch').style.background = $('colorA').value;
+    $('speciesBSwatch').style.background = $('colorB').value;
+    $('speciesALegend').textContent = $('speciesALabel').value;
+    $('speciesBLegend').textContent = $('speciesBLabel').value;
+  }
+  const binary = readBinaryModel(structure);
+  renderStructureInfo(structure, binary);
+  if (binary?.error) {
+    clearGroup(atomLayer);
+    displayedAtomKey = null;
+    $('out1').innerHTML = `<span class="bad">${binary.error}</span>`;
+    return;
+  }
   const cell = makeCell(structure);
   const atoms = cell.atoms.map(atom => ({ ...atom, worldPos: cell.toWorld(atom.pos) }));
-  const atomRadius = cell.atomRadius;
+  const atomRadius = atom => binary
+    ? (atom.type === 'A' ? binary.radiusFractionA : binary.radiusFractionB)
+    : cell.atomRadius;
   const isHcp = structure === 'hcp';
-  $('cubicEquations').hidden = isHcp;
-  $('hcpEquations').hidden = !isHcp;
-  $('hcpPresets').hidden = !isHcp;
-  $('cubicPresets').hidden = isHcp;
-  $('iControl').hidden = !isHcp;
+  const isHexagonal = isHcp || structure === 'binary-wurtzite';
+  $('cubicEquations').hidden = isHexagonal;
+  $('hcpEquations').hidden = !isHexagonal;
+  $('hcpPresets').hidden = !isHexagonal;
+  $('cubicPresets').hidden = isHexagonal;
+  $('iControl').hidden = !isHexagonal;
   $('i').min = -(+$('h').value) - 3;
   $('i').max = -(+$('h').value) + 3;
   $('iV').textContent = $('i').value;
-  $('indexHint').textContent = isHcp
-    ? 'HCP uses Miller–Bravais indices (h k i l), where i = −(h + k). The c/a ratio is ideal.'
+  $('indexHint').textContent = isHexagonal
+    ? 'Hexagonal structures use Miller–Bravais indices (h k i l), where i = −(h + k).'
     : 'Cubic structures use Miller indices (h k l).';
   const radiusPlane = radiusPlanes[structure];
-  $('radiusPlane').textContent = `Show radius-derivation plane ${radiusPlane.label}`;
-  $('radiusRelation').textContent = `Contact geometry: ${radiusPlane.relation}`;
+  if (isBinary) {
+    $('radiusPlane').hidden = true;
+    $('radiusRelation').hidden = true;
+  } else {
+    $('radiusPlane').hidden = false;
+    $('radiusRelation').hidden = false;
+    $('radiusPlane').textContent = `Show radius-derivation plane ${radiusPlane.label}`;
+    $('radiusRelation').textContent = `Contact geometry: ${radiusPlane.relation}`;
+  }
   if (structure !== displayedStructure) {
-    const distance = isHcp ? 5 : Math.hypot(2.1, 1.8, 2.4);
+    const distance = isHexagonal ? 5 : Math.hypot(2.1, 1.8, 2.4);
     camera.position.set(2.1, 1.8, 2.4).normalize().multiplyScalar(distance);
     controls.target.set(0, 0, 0);
     displayedStructure = structure;
@@ -487,17 +741,24 @@ function rebuildScene() {
     );
     const geometry = new THREE.BufferGeometry();
     geometry.setAttribute('position', new THREE.Float32BufferAttribute(edgePositions, 3));
-    group.add(new THREE.LineSegments(geometry, new THREE.LineBasicMaterial({ color: 0x8c97a3 })));
+    overlayLayer.add(new THREE.LineSegments(geometry, new THREE.LineBasicMaterial({ color: 0x8c97a3 })));
   }
 
   // atoms
-  if ($('showAtoms').checked) {
+  const atomKey = `${structure}:${$('showAtoms').checked}:${$('radiusA').value}:${$('radiusB').value}:${$('colorA').value}:${$('colorB').value}`;
+  if (displayedAtomKey !== atomKey) {
+    clearGroup(atomLayer);
+    displayedAtomKey = atomKey;
+  }
+  if ($('showAtoms').checked && atomLayer.children.length === 0) {
     for (const atom of atoms) {
-      const geo = new THREE.SphereGeometry(atomRadius, 32, 24);
-      const mat = new THREE.MeshStandardMaterial({ color: colors[atom.type] });
+      const sphereRadius = atomRadius(atom);
+      const geo = new THREE.SphereGeometry(sphereRadius, 32, 24);
+      const color = atom.type === 'A' ? $('colorA').value : atom.type === 'B' ? $('colorB').value : colors[atom.type];
+      const mat = new THREE.MeshStandardMaterial({ color });
       const mesh = new THREE.Mesh(geo, mat);
       mesh.position.set(...atom.worldPos);
-      group.add(mesh);
+      atomLayer.add(mesh);
     }
   }
 
@@ -519,7 +780,7 @@ function rebuildScene() {
         color: 0x2e8a55, transparent: true, opacity: 0.35,
         side: THREE.DoubleSide, depthWrite: false
       });
-      group.add(new THREE.Mesh(geo, mat));
+      overlayLayer.add(new THREE.Mesh(geo, mat));
 
       const [ph, pk, pl] = cell.orientedIndices(h, k, l);
       const frame = planeFrame(cell.planeNormal(ph, pk, pl), cell.planeConstant(ph, pk, pl));
@@ -530,13 +791,13 @@ function rebuildScene() {
       });
       if ($('showAtoms').checked && $('showSections').checked) {
         for (const atom of atoms) {
-          if (addAtomSection(atom, atomRadius, ph, pk, pl, frame, planeOrigin, polygon2D)) {
+          if (addAtomSection(atom, atomRadius(atom), ph, pk, pl, frame, planeOrigin, polygon2D)) {
             intersectedAtoms++;
           }
         }
       }
     }
-    const denom = isHcp
+    const denom = isHexagonal
       ? Math.sqrt(4 / 3 * (h * h + h * k + k * k) + l * l / HCP_C_OVER_A ** 2)
       : Math.hypot(h, k, l);
     dSpacing = denom > 0 ? (1 / denom).toFixed(3) : null;
@@ -544,13 +805,13 @@ function rebuildScene() {
 
   const i = -h - k;
   const indexLabel = value => value < 0 ? `<span class="overbar">${-value}</span>` : value;
-  const planeLabel = isHcp
+  const planeLabel = isHexagonal
     ? `(${indexLabel(h)} ${indexLabel(k)} ${indexLabel(i)} ${indexLabel(l)})`
     : `(${indexLabel(h)} ${indexLabel(k)} ${indexLabel(l)})`;
   $('out1').innerHTML =
     `<b>Plane</b><span>${planeLabel}</span>` +
     `<b>d-spacing</b><span>${dSpacing ? dSpacing + ' · a' : '&mdash;'}</span>` +
-    `<b>Sphere radius</b><span>${atomRadius.toFixed(3)} · a</span>` +
+    `<b>Sphere radius</b><span>${isBinary ? 'species-specific' : `${atomRadius(atoms[0]).toFixed(3)} · a`}</span>` +
     `<b>Sphere sections in cell</b><span>${intersectedAtoms}</span>`;
 }
 
@@ -586,8 +847,27 @@ function selectRadiusPlane() {
   }
 }
 $('structure').addEventListener('change', () => {
-  selectRadiusPlane();
+  const structure = $('structure').value;
+  if (BINARY_STRUCTURES[structure]) {
+    const defaults = BINARY_STRUCTURES[structure].defaults;
+    $('speciesALabel').value = defaults[0];
+    $('radiusA').value = defaults[1];
+    $('massA').value = defaults[2];
+    $('speciesBLabel').value = defaults[3];
+    $('radiusB').value = defaults[4];
+    $('massB').value = defaults[5];
+    $('h').value = BINARY_STRUCTURES[structure].plane[0];
+    $('k').value = BINARY_STRUCTURES[structure].plane[1];
+    $('l').value = BINARY_STRUCTURES[structure].plane[2] || 0;
+    if (structure === 'binary-wurtzite') $('i').value = - (+$('h').value + +$('k').value);
+  } else {
+    selectRadiusPlane();
+  }
   rebuildScene();
+});
+$('binaryControls').querySelectorAll('input').forEach(input => {
+  input.addEventListener('input', rebuildScene);
+  input.addEventListener('change', rebuildScene);
 });
 $('radiusPlane').addEventListener('click', () => {
   selectRadiusPlane();
