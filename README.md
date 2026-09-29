@@ -3,7 +3,7 @@ Demonstration webpages for ME382, Mechanical Behavior of Materials
 
 ## Crystal planes demo
 
-The standalone page is [`index.html`](index.html). It displays atoms as touching hard spheres, with radii set by the simple-cubic, BCC, or FCC nearest-neighbor spacing. The selected Miller plane can also show the circular cross-sections through those spheres, clipped to the plane's polygon inside the unit cell.
+The standalone page is [`index.html`](index.html). It displays simple-cubic, BCC, FCC, HCP, and diamond-cubic structures as hard spheres sized to touch their nearest neighbors. Select a plane to highlight the circular cross-sections through those spheres. Cubic cells use Miller indices `(hkl)`; HCP uses the four-index Miller-Bravais notation `(hkil)` and an ideal `c/a` ratio.
 
 To preview it on your computer, open the repository in a terminal and run:
 
