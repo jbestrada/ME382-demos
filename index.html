@@ -201,10 +201,10 @@ const BINARY_STRUCTURES = {
     formulaUnits: 4,
     plane: [1, 0, 0],
     compounds: [
-      { id: 'NaCl', label: 'NaCl', A: 'Na+', rA: 1.02, mA: 22.990, B: 'Cl−', rB: 1.81, mB: 35.450 },
-      { id: 'MgO', label: 'MgO', A: 'Mg²+', rA: 0.72, mA: 24.305, B: 'O²−', rB: 1.40, mB: 15.999 },
-      { id: 'LiF', label: 'LiF', A: 'Li+', rA: 0.76, mA: 6.940, B: 'F−', rB: 1.33, mB: 18.998 },
-      { id: 'KCl', label: 'KCl', A: 'K+', rA: 1.38, mA: 39.098, B: 'Cl−', rB: 1.81, mB: 35.450 }
+      { id: 'NaCl', label: 'NaCl', A: 'Na+', rA: 1.02, mA: 22.990, B: 'Cl−', rB: 1.81, mB: 35.450, radiusNote: 'Shannon effective ionic radii, coordination VI.', radiusSource: 'https://doi.org/10.1107/S0567739476001551' },
+      { id: 'MgO', label: 'MgO', A: 'Mg²+', rA: 0.72, mA: 24.305, B: 'O²−', rB: 1.40, mB: 15.999, radiusNote: 'Shannon effective ionic radii, coordination VI.', radiusSource: 'https://doi.org/10.1107/S0567739476001551' },
+      { id: 'LiF', label: 'LiF', A: 'Li+', rA: 0.76, mA: 6.940, B: 'F−', rB: 1.33, mB: 18.998, radiusNote: 'Shannon effective ionic radii, coordination VI.', radiusSource: 'https://doi.org/10.1107/S0567739476001551' },
+      { id: 'KCl', label: 'KCl', A: 'K+', rA: 1.38, mA: 39.098, B: 'Cl−', rB: 1.81, mB: 35.450, radiusNote: 'Shannon effective ionic radii, coordination VI.', radiusSource: 'https://doi.org/10.1107/S0567739476001551' }
     ],
     latticeParameter: (a, b) => 2 * (a + b),
     volume: a => a ** 3,
@@ -216,9 +216,9 @@ const BINARY_STRUCTURES = {
     formulaUnits: 1,
     plane: [1, 1, 0],
     compounds: [
-      { id: 'CsCl', label: 'CsCl', A: 'Cs+', rA: 1.88, mA: 132.905, B: 'Cl−', rB: 1.81, mB: 35.450 },
-      { id: 'CsBr', label: 'CsBr', A: 'Cs+', rA: 1.88, mA: 132.905, B: 'Br−', rB: 1.96, mB: 79.904 },
-      { id: 'CsI', label: 'CsI', A: 'Cs+', rA: 1.88, mA: 132.905, B: 'I−', rB: 2.20, mB: 126.904 }
+      { id: 'CsCl', label: 'CsCl', A: 'Cs+', rA: 1.74, mA: 132.905, B: 'Cl−', rB: 1.81, mB: 35.450, radiusNote: 'Shannon effective ionic radii, coordination VIII.', radiusSource: 'https://doi.org/10.1107/S0567739476001551' },
+      { id: 'CsBr', label: 'CsBr', A: 'Cs+', rA: 1.74, mA: 132.905, B: 'Br−', rB: 1.96, mB: 79.904, radiusNote: 'Shannon effective ionic radii, coordination VIII.', radiusSource: 'https://doi.org/10.1107/S0567739476001551' },
+      { id: 'CsI', label: 'CsI', A: 'Cs+', rA: 1.74, mA: 132.905, B: 'I−', rB: 2.20, mB: 126.904, radiusNote: 'Shannon effective ionic radii, coordination VIII.', radiusSource: 'https://doi.org/10.1107/S0567739476001551' }
     ],
     latticeParameter: (a, b) => 2 * (a + b) / Math.sqrt(3),
     volume: a => a ** 3,
@@ -230,9 +230,9 @@ const BINARY_STRUCTURES = {
     formulaUnits: 4,
     plane: [1, 1, 0],
     compounds: [
-      { id: 'ZnS', label: 'ZnS', A: 'Zn²+', rA: 0.60, mA: 65.380, B: 'S²−', rB: 1.84, mB: 32.060 },
-      { id: 'ZnSe', label: 'ZnSe', A: 'Zn²+', rA: 0.60, mA: 65.380, B: 'Se²−', rB: 1.98, mB: 78.971 },
-      { id: 'GaAs', label: 'GaAs', A: 'Ga³+', rA: 0.47, mA: 69.723, B: 'As³−', rB: 2.22, mB: 74.922 }
+      { id: 'ZnS', label: 'ZnS', A: 'Zn²+', rA: 0.60, mA: 65.380, B: 'S²−', rB: 1.70, mB: 32.060, radiusNote: 'Shannon effective ionic radii, tetrahedral coordination IV.', radiusSource: 'https://doi.org/10.1107/S0567739476001551' },
+      { id: 'ZnSe', label: 'ZnSe', A: 'Zn²+', rA: 0.60, mA: 65.380, B: 'Se²−', rB: 1.84, mB: 78.971, radiusNote: 'Shannon effective ionic radii, tetrahedral coordination IV.', radiusSource: 'https://doi.org/10.1107/S0567739476001551' },
+      { id: 'GaAs', label: 'GaAs', A: 'Ga', rA: 1.22, mA: 69.723, B: 'As', rB: 1.19, mB: 74.922, radiusNote: 'Neutral-atom single-bond covalent radii from Cordero et al.; Ga 122 pm and As 119 pm. GaAs is covalent, so formal Ga³⁺/As³⁻ ionic radii are not used.', radiusSource: 'https://doi.org/10.1039/B801115J' }
     ],
     latticeParameter: (a, b) => 4 * (a + b) / Math.sqrt(3),
     volume: a => a ** 3,
@@ -244,10 +244,10 @@ const BINARY_STRUCTURES = {
     formulaUnits: 6,
     plane: [1, 0, 0],
     compounds: [
-      { id: 'ZnO', label: 'ZnO', A: 'Zn²+', rA: 0.60, mA: 65.380, B: 'O²−', rB: 1.38, mB: 15.999 },
-      { id: 'AlN', label: 'AlN', A: 'Al³+', rA: 0.39, mA: 26.982, B: 'N³−', rB: 1.46, mB: 14.007 },
-      { id: 'GaN', label: 'GaN', A: 'Ga³+', rA: 0.47, mA: 69.723, B: 'N³−', rB: 1.46, mB: 14.007 },
-      { id: 'ZnS-w', label: 'ZnS (wurtzite)', A: 'Zn²+', rA: 0.60, mA: 65.380, B: 'S²−', rB: 1.84, mB: 32.060 }
+      { id: 'ZnO', label: 'ZnO', A: 'Zn²+', rA: 0.60, mA: 65.380, B: 'O²−', rB: 1.38, mB: 15.999, radiusNote: 'Shannon effective ionic radii, tetrahedral coordination IV.', radiusSource: 'https://doi.org/10.1107/S0567739476001551' },
+      { id: 'AlN', label: 'AlN', A: 'Al³+', rA: 0.39, mA: 26.982, B: 'N³−', rB: 1.46, mB: 14.007, radiusNote: 'Shannon effective ionic radii, tetrahedral coordination IV.', radiusSource: 'https://doi.org/10.1107/S0567739476001551' },
+      { id: 'GaN', label: 'GaN', A: 'Ga³+', rA: 0.47, mA: 69.723, B: 'N³−', rB: 1.46, mB: 14.007, radiusNote: 'Shannon effective ionic radii, tetrahedral coordination IV.', radiusSource: 'https://doi.org/10.1107/S0567739476001551' },
+      { id: 'ZnS-w', label: 'ZnS (wurtzite)', A: 'Zn²+', rA: 0.60, mA: 65.380, B: 'S²−', rB: 1.70, mB: 32.060, radiusNote: 'Shannon effective ionic radii, tetrahedral coordination IV.', radiusSource: 'https://doi.org/10.1107/S0567739476001551' }
     ],
     latticeParameter: (a, b) => Math.sqrt(8 / 3) * (a + b),
     volume: a => 3 * Math.sqrt(3) / 2 * a ** 2 * HCP_C_OVER_A * a,
@@ -437,6 +437,8 @@ function renderStructureInfo(structure, binary) {
       `<p><b>${compound.label}</b> uses the ${config.prototype} prototype. ${config.relation}</p>` +
       `<p>With the entered radii, <b>a = ${latticeParameter.toFixed(3)} Å</b>` +
       `${structure === 'binary-wurtzite' ? ` and c = ${(HCP_C_OVER_A * latticeParameter).toFixed(3)} Å` : ''}.</p>` +
+      `<p><b>Radius convention:</b> ${compound.radiusNote} ` +
+      `<a href="${compound.radiusSource}" target="_blank" rel="noopener noreferrer">Source</a></p>` +
       `<p>Radius ratios: r<sub>${labelA}</sub>/a = ${(radiusA / latticeParameter).toFixed(4)}; ` +
       `r<sub>${labelB}</sub>/a = ${(radiusB / latticeParameter).toFixed(4)}.</p>` +
       `<p>There are ${config.formulaUnits} formula units per displayed unit cell, so ` +
@@ -446,7 +448,7 @@ function renderStructureInfo(structure, binary) {
       `V<sub>cell</sub> = ${volume.toFixed(3)} Å³, and 1 Å³ = 10<sup>−24</sup> cm³.</p>` +
       `<p>Hard-sphere packing fraction = Z(4π/3)(r<sub>${labelA}</sub>³ + r<sub>${labelB}</sub>³)/V<sub>cell</sub> ` +
       `= <b>${(100 * packingFraction).toFixed(2)}%</b>. ` +
-      `The model assumes the listed unlike neighbors touch; unusual radius ratios can imply sphere overlap.</p>`;
+      `This is an ideal radius-sum model; actual crystals need not have touching hard spheres, and edited radii can imply overlap.</p>`;
     return;
   }
 
