@@ -5,7 +5,14 @@ Demonstration webpages for ME382, Mechanical Behavior of Materials
 
 The standalone page is [`index.html`](index.html). It displays simple-cubic, BCC, FCC, HCP, and diamond-cubic structures as hard spheres sized to touch their nearest neighbors. Select a plane to highlight the circular cross-sections through those spheres. Each elemental structure shows its radius derivation and hard-sphere packing fraction. Cubic cells use signed Miller indices `(hkl)`; negative signs are shown as overbars. Hexagonal structures use Miller-Bravais indices `(hkil)` with an `i` slider constrained by `h + k + i = 0`, and an ideal `c/a` ratio.
 
-Binary-compound examples include rock-salt NaCl/MgO/LiF/KCl, B2 CsCl/CsBr/CsI, zincblende ZnS/ZnSe/GaAs, and wurtzite ZnO/AlN/GaN/ZnS. Select a compound from the structure-specific dropdown, then adjust its radii, masses, and colors if desired. The applet derives the lattice parameter from unlike-neighbor contact and estimates packing fraction and density; these are ideal hard-sphere calculations, not measured material data. The initial ionic radii are illustrative coordination-dependent values and can be changed. Each binary prototype's default mixed-species plane is checked against both sublattices, and the page reports the number of A/B atom centers on the selected plane. Such a mixed-species plane is not always the densest plane: for example, the close-packed FCC `{111}` layers in rock salt and zincblende contain one species at a time.
+Binary-compound examples include rock-salt NaCl/MgO/LiF/KCl, B2 CsCl/CsBr/CsI, zincblende ZnS/ZnSe/GaAs, and wurtzite ZnO/AlN/GaN/ZnS. Preset ionic radii use Shannon's effective ionic radii for the coordination number of each prototype: VI for rock salt, VIII for B2, and IV for zincblende and wurtzite. GaAs is covalent, so its preset uses neutral-atom single-bond covalent radii (Ga 1.22 Å, As 1.19 Å) from Cordero et al., not formal Ga³⁺/As³⁻ ionic radii. The applet displays the radius convention and source for each selection. You can still adjust radii, masses, and colors. The lattice parameter is derived from ideal unlike-neighbor contact; packing fraction and density are estimates from that radius-sum model, not measured material data.
+
+Radius references:
+
+- R. D. Shannon, “Revised effective ionic radii and systematic studies of interatomic distances in halides and chalcogenides,” *Acta Crystallographica Section A* 32 (1976), 751–767. [doi:10.1107/S0567739476001551](https://doi.org/10.1107/S0567739476001551).
+- B. Cordero et al., “Covalent radii revisited,” *Dalton Transactions* (2008), 2832–2838. [doi:10.1039/B801115J](https://doi.org/10.1039/B801115J).
+
+Each binary prototype's default mixed-species plane is checked against both sublattices, and the page reports the number of A/B atom centers on the selected plane. Such a mixed-species plane is not always the densest plane: for example, the close-packed FCC `{111}` layers in rock salt and zincblende contain one species at a time.
 
 To preview it on your computer, open the repository in a terminal and run:
 
