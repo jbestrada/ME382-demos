@@ -3,7 +3,9 @@ Demonstration webpages for ME382, Mechanical Behavior of Materials
 
 ## Crystal planes demo
 
-The standalone page is [`index.html`](index.html). To preview it on your computer, open the repository in a terminal and run:
+The standalone page is [`index.html`](index.html). It displays simple-cubic, BCC, FCC, HCP, and diamond-cubic structures as hard spheres sized to touch their nearest neighbors. Select a plane to highlight the circular cross-sections through those spheres. Cubic cells use Miller indices `(hkl)`; HCP uses the four-index Miller-Bravais notation `(hkil)` and an ideal `c/a` ratio.
+
+To preview it on your computer, open the repository in a terminal and run:
 
 ```sh
 python3 -m http.server 8000

@@ -33,6 +33,7 @@
   }
 }
 *{box-sizing:border-box}
+[hidden]{display:none!important}
 body{margin:0;background:var(--ground);color:var(--body);
   font:14px/1.5 "IBM Plex Sans", system-ui, sans-serif;padding-inline:16px}
 .wrap{max-width:1080px;margin:0 auto;padding-block:48px 64px}
@@ -72,6 +73,10 @@ input[type=range]{width:100%;accent-color:var(--a)}
   width:100%;aspect-ratio:1/1;max-width:480px;margin:0 auto;
   border-radius:8px;overflow:hidden;background:var(--ground);border:1px solid var(--rule)
 }
+#cubicEquations{display:contents}
+.legend{display:flex;flex-wrap:wrap;gap:8px 18px;margin:12px 0 0;color:var(--muted);font-size:12px}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.legend i{width:12px;height:12px;border-radius:3px;display:inline-block}
 .foot{margin-top:40px;padding-top:18px;border-top:1px solid var(--rule);
   font:400 12.5px/1.6 "IBM Plex Sans", system-ui, sans-serif;color:var(--muted)}
 .foot a{color:var(--a)}
@@ -82,15 +87,21 @@ input[type=range]{width:100%;accent-color:var(--a)}
 
   <p class="eyebrow">ME 382 &nbsp;/&nbsp; Crystal structures</p>
   <h1>Crystallographic planes</h1>
-  <p class="lede">Rotate simple cubic, BCC, and FCC unit cells and visualize how a (hkl) plane cuts through the lattice.</p>
+  <p class="lede">Rotate cubic, hexagonal close-packed, and diamond-cubic unit cells to explore how crystallographic planes cut through their lattices.</p>
 
   <div class="llm" role="note">
-    <p>Choose a crystal structure and Miller indices to see the corresponding plane inside a cubic unit cell. Drag the model to rotate it.</p>
+    <p>Choose a crystal structure and its plane indices to see a plane intersect the unit cell. Atoms are drawn as touching hard spheres; turn on plane sections to highlight the circular areas cut through them. The diamond-cubic structure is tetrahedrally coordinated, not close-packed.</p>
   </div>
 
   <div class="eqs">
-    <div><span data-tex="hx+ky+lz=n \quad \text{(plane through lattice, in units of } a\text{)}"></span></div>
-    <div><span data-tex="d_{hkl}=\dfrac{a}{\sqrt{h^2+k^2+l^2}} \quad \text{(cubic systems)}"></span></div>
+    <div id="cubicEquations">
+      <span data-tex="hx+ky+lz=n \quad \text{(plane through lattice, in units of } a\text{)}"></span>
+      <span data-tex="d_{hkl}=\dfrac{a}{\sqrt{h^2+k^2+l^2}} \quad \text{(cubic systems)}"></span>
+      <span data-tex="r_{\mathrm{SC}}=\frac{a}{2},\quad r_{\mathrm{BCC}}=\frac{\sqrt3\,a}{4},\quad r_{\mathrm{FCC}}=\frac{\sqrt2\,a}{4},\quad r_{\mathrm{diamond}}=\frac{\sqrt3\,a}{8}"></span>
+    </div>
+    <div id="hcpEquations" hidden>
+      <span data-tex="h+k+i=0,\quad \frac{1}{d_{hkil}^{\,2}}=\frac{4}{3a^2}(h^2+hk+k^2)+\frac{l^2}{c^2},\quad \frac{c}{a}=\sqrt{\frac{8}{3}},\quad r_{\mathrm{HCP}}=\frac{a}{2}"></span>
+    </div>
   </div>
 
   <section>
@@ -103,28 +114,42 @@ input[type=range]{width:100%;accent-color:var(--a)}
             <option value="sc">Simple cubic</option>
             <option value="bcc" selected>BCC</option>
             <option value="fcc">FCC</option>
+            <option value="hcp">Hexagonal close-packed (HCP)</option>
+            <option value="diamond">Diamond cubic</option>
           </select>
         </div>
 
+        <p id="indexHint" class="given">Cubic structures use Miller indices (h k l).</p>
         <div class="ctl"><label><span>h</span><span id="hV"></span></label><input id="h" type="range" min="-3" max="3" step="1" value="1"></div>
         <div class="ctl"><label><span>k</span><span id="kV"></span></label><input id="k" type="range" min="-3" max="3" step="1" value="1"></div>
         <div class="ctl"><label><span>l</span><span id="lV"></span></label><input id="l" type="range" min="-3" max="3" step="1" value="0"></div>
 
-        <div class="presets">
+        <div class="presets" id="cubicPresets">
           <button data-hkl="1,0,0">(100)</button>
           <button data-hkl="1,1,0">(110)</button>
           <button data-hkl="1,1,1">(111)</button>
           <button data-hkl="2,0,0">(200)</button>
         </div>
+        <div class="presets" id="hcpPresets" hidden>
+          <button data-hkl="0,0,1">(0001)</button>
+          <button data-hkl="1,0,0">(10-10)</button>
+          <button data-hkl="1,1,0">(11-20)</button>
+          <button data-hkl="1,0,1">(10-11)</button>
+        </div>
 
         <label class="chk"><input id="showAtoms" type="checkbox" checked> Show atoms</label>
         <label class="chk"><input id="showEdges" type="checkbox" checked> Show unit cell edges</label>
         <label class="chk"><input id="showPlane" type="checkbox" checked> Show plane</label>
+        <label class="chk"><input id="showSections" type="checkbox" checked> Highlight plane sections through atoms</label>
 
         <div class="out" id="out1"></div>
       </div>
 
       <div id="scene-container"></div>
+    </div>
+    <div class="legend" aria-label="Visualization legend">
+      <span><i style="background:#2e8a55"></i>Plane within the unit cell</span>
+      <span><i style="background:#ffc857"></i>Cross-sections through atoms</span>
     </div>
   </section>
 
@@ -136,6 +161,7 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 
 const $ = id => document.getElementById(id);
+const HCP_C_OVER_A = Math.sqrt(8 / 3);
 
 /* ---------- lattice generation ---------- */
 function generateAtoms(structure) {
@@ -151,67 +177,153 @@ function generateAtoms(structure) {
     [[0.5,0.5,0],[0.5,0,0.5],[0,0.5,0.5],
      [0.5,0.5,1],[0.5,1,0.5],[1,0.5,0.5]].forEach(p => atoms.push({ pos: p, type: 'face' }));
   }
+  if (structure === 'diamond') {
+    [[0.25,0.25,0.25],[0.25,0.75,0.75],
+     [0.75,0.25,0.75],[0.75,0.75,0.25]]
+      .forEach(p => atoms.push({ pos: p, type: 'diamond' }));
+    [[0.5,0.5,0],[0.5,0,0.5],[0,0.5,0.5],
+     [0.5,0.5,1],[0.5,1,0.5],[1,0.5,0.5]]
+      .forEach(p => atoms.push({ pos: p, type: 'face' }));
+  }
+  if (structure === 'hcp') {
+    const hexCorners = [[1,0],[1,1],[0,1],[-1,0],[-1,-1],[0,-1]];
+    for (const z of [0, 1]) {
+      hexCorners.forEach(([u, v]) => atoms.push({ pos: [u, v, z], type: 'corner' }));
+      atoms.push({ pos: [0, 0, z], type: 'corner' });
+    }
+    [[2/3,1/3],[-1/3,1/3],[-1/3,-2/3]]
+      .forEach(([u, v]) => atoms.push({ pos: [u, v, 0.5], type: 'body' }));
+  }
   return atoms;
 }
 
-/* ---------- plane clipping against unit cube ---------- */
-// Plane: h*x + k*y + l*z = 1  (standard Miller-index intercept form, a = 1)
-function clipPlaneToCube(h, k, l) {
-  if (h === 0 && k === 0 && l === 0) return [];
-  const n = [h, k, l], d = 1, eps = 1e-9;
-
-  const V = [];
-  for (let xi = 0; xi <= 1; xi++)
-    for (let yi = 0; yi <= 1; yi++)
-      for (let zi = 0; zi <= 1; zi++) V.push([xi, yi, zi]);
-
-  const edges = [];
-  for (let i = 0; i < V.length; i++)
-    for (let j = i + 1; j < V.length; j++) {
-      const diffSum = V[i].reduce((s, v, idx) => s + Math.abs(v - V[j][idx]), 0);
-      if (diffSum === 1) edges.push([V[i], V[j]]);
+function makeCell(structure) {
+  if (structure === 'hcp') {
+    const corners = [[1,0],[1,1],[0,1],[-1,0],[-1,-1],[0,-1]];
+    const vertices = [...corners.map(([u,v]) => [u,v,0]), ...corners.map(([u,v]) => [u,v,1])];
+    const edges = [];
+    for (let i = 0; i < 6; i++) {
+      edges.push([i, (i + 1) % 6], [i + 6, (i + 1) % 6 + 6], [i, i + 6]);
     }
+    return {
+      atoms: generateAtoms(structure),
+      vertices,
+      edges,
+      atomRadius: 0.5,
+      toWorld: ([u, v, w]) => [u - v / 2, Math.sqrt(3) * v / 2, HCP_C_OVER_A * (w - 0.5)],
+      planeNormal: (h, k, l) => [h, (h + 2 * k) / Math.sqrt(3), l / HCP_C_OVER_A],
+      planeConstant: (h, k, l) => 1 - l / 2
+    };
+  }
 
+  const vertices = [];
+  for (let x = 0; x <= 1; x++)
+    for (let y = 0; y <= 1; y++)
+      for (let z = 0; z <= 1; z++) vertices.push([x, y, z]);
+  const edges = [];
+  for (let i = 0; i < vertices.length; i++) {
+    for (let j = i + 1; j < vertices.length; j++) {
+      const distance = vertices[i].reduce((sum, value, axis) => sum + Math.abs(value - vertices[j][axis]), 0);
+      if (distance === 1) edges.push([i, j]);
+    }
+  }
+  const radii = {
+    sc: 0.5,
+    bcc: Math.sqrt(3) / 4,
+    fcc: Math.SQRT2 / 4,
+    diamond: Math.sqrt(3) / 8
+  };
+  return {
+    atoms: generateAtoms(structure),
+    vertices,
+    edges,
+    atomRadius: radii[structure],
+    toWorld: pos => pos.map(value => value - 0.5),
+    planeNormal: (h, k, l) => [h, k, l],
+    planeConstant: (h, k, l) => 1 - (h + k + l) / 2
+  };
+}
+
+function planeFrame(normalVector, constant) {
+  const length = Math.hypot(...normalVector);
+  if (length === 0) return null;
+  const normal = normalVector.map(value => value / length);
+  const arbitrary = Math.abs(normal[0]) < 0.9 ? [1, 0, 0] : [0, 1, 0];
+  const cross = (a, b) => [
+    a[1] * b[2] - a[2] * b[1],
+    a[2] * b[0] - a[0] * b[2],
+    a[0] * b[1] - a[1] * b[0]
+  ];
+  const u = cross(normal, arbitrary);
+  const uLength = Math.hypot(...u);
+  const uu = u.map(value => value / uLength);
+  const vv = cross(normal, uu);
+  const origin = normalVector.map(value => value * constant / (length ** 2));
+  return { length, normal, origin, u: uu, v: vv };
+}
+
+/* ---------- plane clipping against the selected unit cell ---------- */
+function clipPlaneToCell(h, k, l, cell) {
+  const normalVector = cell.planeNormal(h, k, l);
+  const frame = planeFrame(normalVector, cell.planeConstant(h, k, l));
+  if (!frame) return [];
+  const eps = 1e-9;
   const raw = [];
-  for (const [A, B] of edges) {
-    const fA = n[0]*A[0]+n[1]*A[1]+n[2]*A[2] - d;
-    const fB = n[0]*B[0]+n[1]*B[1]+n[2]*B[2] - d;
+  for (const [i, j] of cell.edges) {
+    const A = cell.vertices[i], B = cell.vertices[j];
+    const fA = h * A[0] + k * A[1] + l * A[2] - 1;
+    const fB = h * B[0] + k * B[1] + l * B[2] - 1;
     if (Math.abs(fA - fB) < eps) continue;      // edge parallel to plane
     const t = fA / (fA - fB);
     if (t >= -eps && t <= 1 + eps) {
-      raw.push([
+      const point = [
         A[0] + t*(B[0]-A[0]),
         A[1] + t*(B[1]-A[1]),
-        A[2] + t*(B[2]-A[2]),
-      ]);
+        A[2] + t*(B[2]-A[2])
+      ];
+      if (!raw.some(q => Math.hypot(...point.map((value, axis) => value - q[axis])) < 1e-6)) raw.push(point);
     }
   }
 
-  // dedupe
-  const pts = [];
-  for (const p of raw) {
-    if (!pts.some(q => Math.hypot(p[0]-q[0], p[1]-q[1], p[2]-q[2]) < 1e-6)) pts.push(p);
-  }
+  const pts = raw.map(cell.toWorld);
   if (pts.length < 3) return [];
 
-  // order into a polygon: project onto the plane using two in-plane basis vectors
+  // Order the intersection vertices around their centroid in the plane.
   const c = pts.reduce((a,p)=>[a[0]+p[0],a[1]+p[1],a[2]+p[2]],[0,0,0]).map(v=>v/pts.length);
-  const nl = Math.hypot(...n);
-  const normal = n.map(v => v/nl);
-  const arb = Math.abs(normal[0]) < 0.9 ? [1,0,0] : [0,1,0];
-  const cross = (a,b) => [a[1]*b[2]-a[2]*b[1], a[2]*b[0]-a[0]*b[2], a[0]*b[1]-a[1]*b[0]];
-  const u = cross(normal, arb); const ul = Math.hypot(...u); const uu = u.map(v=>v/ul);
-  const vv = cross(normal, uu);
-
   pts.forEach(p => {
     const rel = [p[0]-c[0], p[1]-c[1], p[2]-c[2]];
     p.angle = Math.atan2(
-      rel[0]*vv[0]+rel[1]*vv[1]+rel[2]*vv[2],
-      rel[0]*uu[0]+rel[1]*uu[1]+rel[2]*uu[2]
+      rel[0]*frame.v[0]+rel[1]*frame.v[1]+rel[2]*frame.v[2],
+      rel[0]*frame.u[0]+rel[1]*frame.u[1]+rel[2]*frame.u[2]
     );
   });
   pts.sort((a,b) => a.angle - b.angle);
   return pts;
+}
+
+function clipPolygon(subject, boundary) {
+  let output = subject;
+  for (let i = 0; i < boundary.length && output.length; i++) {
+    const a = boundary[i], b = boundary[(i + 1) % boundary.length];
+    const edge = [b[0] - a[0], b[1] - a[1]];
+    const side = p => edge[0] * (p[1] - a[1]) - edge[1] * (p[0] - a[0]);
+    const input = output;
+    output = [];
+    for (let j = 0; j < input.length; j++) {
+      const start = input[j], end = input[(j + 1) % input.length];
+      const startSide = side(start), endSide = side(end);
+      const startInside = startSide >= -1e-9, endInside = endSide >= -1e-9;
+      if (startInside) output.push(start);
+      if (startInside !== endInside) {
+        const t = startSide / (startSide - endSide);
+        output.push([
+          start[0] + t * (end[0] - start[0]),
+          start[1] + t * (end[1] - start[1])
+        ]);
+      }
+    }
+  }
+  return output;
 }
 
 /* ---------- Three.js scene ---------- */
@@ -235,6 +347,57 @@ scene.add(dl);
 const group = new THREE.Group();
 scene.add(group);
 
+let displayedStructure = null;
+const dot = (a, b) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
+const addScaled = (point, direction, scale) =>
+  point.map((value, index) => value + direction[index] * scale);
+
+function addAtomSection(atom, radius, h, k, l, frame, planeOrigin, cellPolygon) {
+  const signedDistance = (h * atom.pos[0] + k * atom.pos[1] + l * atom.pos[2] - 1) / frame.length;
+  const sectionRadiusSquared = radius ** 2 - signedDistance ** 2;
+  if (sectionRadiusSquared <= 1e-8) return false;
+
+  const center = atom.worldPos;
+  const projectedCenter = addScaled(center, frame.normal, -signedDistance);
+  const relativeCenter = projectedCenter.map((value, index) => value - planeOrigin[index]);
+  const center2D = [dot(relativeCenter, frame.u), dot(relativeCenter, frame.v)];
+  const sectionRadius = Math.sqrt(sectionRadiusSquared);
+  const circle = Array.from({ length: 48 }, (_, index) => {
+    const angle = 2 * Math.PI * index / 48;
+    return [
+      center2D[0] + sectionRadius * Math.cos(angle),
+      center2D[1] + sectionRadius * Math.sin(angle)
+    ];
+  });
+  const clipped = clipPolygon(circle, cellPolygon);
+  if (clipped.length < 3) return false;
+
+  const center2DClipped = clipped.reduce(
+    (sum, point) => [sum[0] + point[0] / clipped.length, sum[1] + point[1] / clipped.length],
+    [0, 0]
+  );
+  const to3D = ([u, v]) => [
+    planeOrigin[0] + frame.u[0] * u + frame.v[0] * v,
+    planeOrigin[1] + frame.u[1] * u + frame.v[1] * v,
+    planeOrigin[2] + frame.u[2] * u + frame.v[2] * v
+  ];
+  const vertices = [center2DClipped, ...clipped].flatMap(point => to3D(point));
+  const indices = [];
+  for (let i = 0; i < clipped.length; i++) indices.push(0, i + 1, (i + 1) % clipped.length + 1);
+  const geometry = new THREE.BufferGeometry();
+  geometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
+  geometry.setIndex(indices);
+  geometry.computeVertexNormals();
+  const material = new THREE.MeshBasicMaterial({
+    color: 0xffc857, transparent: true, opacity: 0.9,
+    side: THREE.DoubleSide, depthWrite: false, depthTest: false
+  });
+  const section = new THREE.Mesh(geometry, material);
+  section.renderOrder = 2;
+  group.add(section);
+  return true;
+}
+
 function resize() {
   const s = container.clientWidth;
   renderer.setSize(s, s, false);
@@ -244,7 +407,7 @@ function resize() {
 window.addEventListener('resize', resize);
 resize();
 
-const colors = { corner: 0x3d7ea6, body: 0xd97a2b, face: 0xd97a2b };
+const colors = { corner: 0x3d7ea6, body: 0xd97a2b, face: 0xd97a2b, diamond: 0x845ec2 };
 
 function rebuildScene() {
   while (group.children.length) {
@@ -260,36 +423,53 @@ function rebuildScene() {
   const structure = $('structure').value;
   const h = +$('h').value, k = +$('k').value, l = +$('l').value;
   $('hV').textContent = h; $('kV').textContent = k; $('lV').textContent = l;
-
-  const shift = p => new THREE.Vector3(p[0]-0.5, p[1]-0.5, p[2]-0.5);
+  const cell = makeCell(structure);
+  const atoms = cell.atoms.map(atom => ({ ...atom, worldPos: cell.toWorld(atom.pos) }));
+  const atomRadius = cell.atomRadius;
+  const isHcp = structure === 'hcp';
+  $('cubicEquations').hidden = isHcp;
+  $('hcpEquations').hidden = !isHcp;
+  $('hcpPresets').hidden = !isHcp;
+  $('cubicPresets').hidden = isHcp;
+  $('indexHint').textContent = isHcp
+    ? 'HCP uses Miller–Bravais indices (h k i l), where i = −(h + k). The c/a ratio is ideal.'
+    : 'Cubic structures use Miller indices (h k l).';
+  if (structure !== displayedStructure) {
+    const distance = isHcp ? 5 : Math.hypot(2.1, 1.8, 2.4);
+    camera.position.set(2.1, 1.8, 2.4).normalize().multiplyScalar(distance);
+    controls.target.set(0, 0, 0);
+    displayedStructure = structure;
+  }
 
   // unit cell edges
   if ($('showEdges').checked) {
-    const geo = new THREE.BoxGeometry(1, 1, 1);
-    const edges = new THREE.EdgesGeometry(geo);
-    const mat = new THREE.LineBasicMaterial({ color: 0x8c97a3 });
-    group.add(new THREE.LineSegments(edges, mat));
+    const edgePositions = cell.edges.flatMap(([i, j]) =>
+      [...cell.toWorld(cell.vertices[i]), ...cell.toWorld(cell.vertices[j])]
+    );
+    const geometry = new THREE.BufferGeometry();
+    geometry.setAttribute('position', new THREE.Float32BufferAttribute(edgePositions, 3));
+    group.add(new THREE.LineSegments(geometry, new THREE.LineBasicMaterial({ color: 0x8c97a3 })));
   }
 
   // atoms
   if ($('showAtoms').checked) {
-    for (const atom of generateAtoms(structure)) {
-      const r = atom.type === 'corner' ? 0.09 : 0.11;
-      const geo = new THREE.SphereGeometry(r, 24, 24);
+    for (const atom of atoms) {
+      const geo = new THREE.SphereGeometry(atomRadius, 32, 24);
       const mat = new THREE.MeshStandardMaterial({ color: colors[atom.type] });
       const mesh = new THREE.Mesh(geo, mat);
-      mesh.position.copy(shift(atom.pos));
+      mesh.position.set(...atom.worldPos);
       group.add(mesh);
     }
   }
 
   // plane
   let dSpacing = null;
+  let intersectedAtoms = 0;
   if ($('showPlane').checked) {
-    const poly = clipPlaneToCube(h, k, l);
+    const poly = clipPlaneToCell(h, k, l, cell);
     if (poly.length >= 3) {
       const c = poly.reduce((a,p)=>[a[0]+p[0],a[1]+p[1],a[2]+p[2]],[0,0,0]).map(v=>v/poly.length);
-      const verts = [c, ...poly].flatMap(p => [p[0]-0.5, p[1]-0.5, p[2]-0.5]);
+      const verts = [c, ...poly].flatMap(p => p);
       const idx = [];
       for (let i = 0; i < poly.length; i++) idx.push(0, i+1, ((i+1)%poly.length)+1);
       const geo = new THREE.BufferGeometry();
@@ -301,17 +481,36 @@ function rebuildScene() {
         side: THREE.DoubleSide, depthWrite: false
       });
       group.add(new THREE.Mesh(geo, mat));
+
+      const frame = planeFrame(cell.planeNormal(h, k, l), cell.planeConstant(h, k, l));
+      const planeOrigin = frame.origin;
+      const polygon2D = poly.map(point => {
+        const relative = point.map((value, index) => value - planeOrigin[index]);
+        return [dot(relative, frame.u), dot(relative, frame.v)];
+      });
+      if ($('showAtoms').checked && $('showSections').checked) {
+        for (const atom of atoms) {
+          if (addAtomSection(atom, atomRadius, h, k, l, frame, planeOrigin, polygon2D)) {
+            intersectedAtoms++;
+          }
+        }
+      }
     }
-    const denom = Math.hypot(h, k, l);
+    const denom = isHcp
+      ? Math.sqrt(4 / 3 * (h * h + h * k + k * k) + l * l / HCP_C_OVER_A ** 2)
+      : Math.hypot(h, k, l);
     dSpacing = denom > 0 ? (1 / denom).toFixed(3) : null;
   }
 
+  const planeLabel = isHcp ? `(${h} ${k} ${-h-k} ${l})` : `(${h} ${k} ${l})`;
   $('out1').innerHTML =
-    `<b>Plane</b><span>(${h} ${k} ${l})</span>` +
-    `<b>d-spacing</b><span>${dSpacing ? dSpacing + ' · a' : '&mdash;'}</span>`;
+    `<b>Plane</b><span>${planeLabel}</span>` +
+    `<b>d-spacing</b><span>${dSpacing ? dSpacing + ' · a' : '&mdash;'}</span>` +
+    `<b>Sphere radius</b><span>${atomRadius.toFixed(3)} · a</span>` +
+    `<b>Sphere sections in cell</b><span>${intersectedAtoms}</span>`;
 }
 
-for (const id of ['structure','h','k','l','showAtoms','showEdges','showPlane']) {
+for (const id of ['structure','h','k','l','showAtoms','showEdges','showPlane','showSections']) {
   $(id).addEventListener('input', rebuildScene);
   $(id).addEventListener('change', rebuildScene);
 }
