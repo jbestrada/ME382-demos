@@ -66,6 +66,7 @@ input[type=range]{width:100%;accent-color:var(--a)}
   font:500 12px "IBM Plex Sans",sans-serif;padding:5px 10px;border-radius:6px;
   border:1px solid var(--rule);background:var(--ground);color:var(--body);cursor:pointer}
 .presets button:hover{border-color:var(--a);color:var(--a)}
+.presets .radius-plane{border-color:var(--a);color:var(--a);font-weight:600}
 .out{display:grid;grid-template-columns:auto 1fr;gap:2px 12px;font-variant-numeric:tabular-nums;
   border-top:1px solid var(--rule);padding-top:10px;margin-top:6px}
 .out b{font-weight:600}
@@ -124,6 +125,11 @@ input[type=range]{width:100%;accent-color:var(--a)}
         <div class="ctl"><label><span>k</span><span id="kV"></span></label><input id="k" type="range" min="-3" max="3" step="1" value="1"></div>
         <div class="ctl"><label><span>l</span><span id="lV"></span></label><input id="l" type="range" min="-3" max="3" step="1" value="0"></div>
 
+        <div class="presets">
+          <button id="radiusPlane" class="radius-plane" type="button">Show radius-derivation plane (110)</button>
+        </div>
+        <p id="radiusRelation" class="given"></p>
+
         <div class="presets" id="cubicPresets">
           <button data-hkl="1,0,0">(100)</button>
           <button data-hkl="1,1,0">(110)</button>
@@ -162,6 +168,13 @@ import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 
 const $ = id => document.getElementById(id);
 const HCP_C_OVER_A = Math.sqrt(8 / 3);
+const radiusPlanes = {
+  sc: { indices: [1, 0, 0], label: '(100)', relation: '2r = a (nearest neighbors along a cube edge).' },
+  bcc: { indices: [1, 1, 0], label: '(110)', relation: '4r = √3 a (the body-diagonal contact row lies in this plane).' },
+  fcc: { indices: [1, 1, 1], label: '(111)', relation: '4r = √2 a (the face-diagonal contact row lies in this plane).' },
+  hcp: { indices: [0, 0, 1], label: '(0001)', relation: '2r = a (nearest neighbors in the basal plane).' },
+  diamond: { indices: [1, 1, 0], label: '(110)', relation: '8r = √3 a (a nearest-neighbor bond lies in this plane).' }
+};
 
 /* ---------- lattice generation ---------- */
 function generateAtoms(structure) {
@@ -434,6 +447,9 @@ function rebuildScene() {
   $('indexHint').textContent = isHcp
     ? 'HCP uses Miller–Bravais indices (h k i l), where i = −(h + k). The c/a ratio is ideal.'
     : 'Cubic structures use Miller indices (h k l).';
+  const radiusPlane = radiusPlanes[structure];
+  $('radiusPlane').textContent = `Show radius-derivation plane ${radiusPlane.label}`;
+  $('radiusRelation').textContent = `Contact geometry: ${radiusPlane.relation}`;
   if (structure !== displayedStructure) {
     const distance = isHcp ? 5 : Math.hypot(2.1, 1.8, 2.4);
     camera.position.set(2.1, 1.8, 2.4).normalize().multiplyScalar(distance);
@@ -510,11 +526,25 @@ function rebuildScene() {
     `<b>Sphere sections in cell</b><span>${intersectedAtoms}</span>`;
 }
 
-for (const id of ['structure','h','k','l','showAtoms','showEdges','showPlane','showSections']) {
+for (const id of ['h','k','l','showAtoms','showEdges','showPlane','showSections']) {
   $(id).addEventListener('input', rebuildScene);
   $(id).addEventListener('change', rebuildScene);
 }
-document.querySelectorAll('.presets button').forEach(btn => {
+function selectRadiusPlane() {
+  const { indices } = radiusPlanes[$('structure').value];
+  $('h').value = indices[0];
+  $('k').value = indices[1];
+  $('l').value = indices[2];
+}
+$('structure').addEventListener('change', () => {
+  selectRadiusPlane();
+  rebuildScene();
+});
+$('radiusPlane').addEventListener('click', () => {
+  selectRadiusPlane();
+  rebuildScene();
+});
+document.querySelectorAll('.presets button[data-hkl]').forEach(btn => {
   btn.addEventListener('click', () => {
     const [h,k,l] = btn.dataset.hkl.split(',');
     $('h').value = h; $('k').value = k; $('l').value = l;
