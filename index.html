@@ -70,6 +70,7 @@ input[type=range]{width:100%;accent-color:var(--a)}
 .out{display:grid;grid-template-columns:auto 1fr;gap:2px 12px;font-variant-numeric:tabular-nums;
   border-top:1px solid var(--rule);padding-top:10px;margin-top:6px}
 .out b{font-weight:600}
+.overbar{text-decoration:overline}
 #scene-container{
   width:100%;aspect-ratio:1/1;max-width:480px;margin:0 auto;
   border-radius:8px;overflow:hidden;background:var(--ground);border:1px solid var(--rule)
@@ -123,6 +124,7 @@ input[type=range]{width:100%;accent-color:var(--a)}
         <p id="indexHint" class="given">Cubic structures use Miller indices (h k l).</p>
         <div class="ctl"><label><span>h</span><span id="hV"></span></label><input id="h" type="range" min="-3" max="3" step="1" value="1"></div>
         <div class="ctl"><label><span>k</span><span id="kV"></span></label><input id="k" type="range" min="-3" max="3" step="1" value="1"></div>
+        <div class="ctl" id="iControl" hidden><label><span>i</span><span id="iV"></span></label><input id="i" type="range" min="-6" max="6" step="1" value="-2"></div>
         <div class="ctl"><label><span>l</span><span id="lV"></span></label><input id="l" type="range" min="-3" max="3" step="1" value="0"></div>
 
         <div class="presets">
@@ -131,16 +133,16 @@ input[type=range]{width:100%;accent-color:var(--a)}
         <p id="radiusRelation" class="given"></p>
 
         <div class="presets" id="cubicPresets">
-          <button data-hkl="1,0,0">(100)</button>
-          <button data-hkl="1,1,0">(110)</button>
-          <button data-hkl="1,1,1">(111)</button>
-          <button data-hkl="2,0,0">(200)</button>
+          <button data-indices="1,0,0">(100)</button>
+          <button data-indices="1,1,0">(110)</button>
+          <button data-indices="1,1,1">(111)</button>
+          <button data-indices="2,0,0">(200)</button>
         </div>
         <div class="presets" id="hcpPresets" hidden>
-          <button data-hkl="0,0,1">(0001)</button>
-          <button data-hkl="1,0,0">(10-10)</button>
-          <button data-hkl="1,1,0">(11-20)</button>
-          <button data-hkl="1,0,1">(10-11)</button>
+          <button data-indices="0,0,0,1">(0001)</button>
+          <button data-indices="1,0,-1,0">(10<span class="overbar">1</span>0)</button>
+          <button data-indices="1,1,-2,0">(11<span class="overbar">2</span>0)</button>
+          <button data-indices="1,0,-1,1">(10<span class="overbar">1</span>1)</button>
         </div>
 
         <label class="chk"><input id="showAtoms" type="checkbox" checked> Show atoms</label>
@@ -172,7 +174,7 @@ const radiusPlanes = {
   sc: { indices: [1, 0, 0], label: '(100)', relation: '2r = a (nearest neighbors along a cube edge).' },
   bcc: { indices: [1, 1, 0], label: '(110)', relation: '4r = √3 a (the body-diagonal contact row lies in this plane).' },
   fcc: { indices: [1, 1, 1], label: '(111)', relation: '4r = √2 a (the face-diagonal contact row lies in this plane).' },
-  hcp: { indices: [0, 0, 1], label: '(0001)', relation: '2r = a (nearest neighbors in the basal plane).' },
+  hcp: { indices: [0, 0, 0, 1], label: '(0001)', relation: '2r = a (nearest neighbors in the basal plane).' },
   diamond: { indices: [1, 1, 0], label: '(110)', relation: '8r = √3 a (a nearest-neighbor bond lies in this plane).' }
 };
 
@@ -224,6 +226,10 @@ function makeCell(structure) {
       edges,
       atomRadius: 0.5,
       toWorld: ([u, v, w]) => [u - v / 2, Math.sqrt(3) * v / 2, HCP_C_OVER_A * (w - 0.5)],
+      orientedIndices: (h, k, l) => {
+        const sign = orientationSign(h, k, l);
+        return [sign * h, sign * k, sign * l];
+      },
       planeNormal: (h, k, l) => [h, (h + 2 * k) / Math.sqrt(3), l / HCP_C_OVER_A],
       planeConstant: (h, k, l) => 1 - l / 2
     };
@@ -252,9 +258,18 @@ function makeCell(structure) {
     edges,
     atomRadius: radii[structure],
     toWorld: pos => pos.map(value => value - 0.5),
+    orientedIndices: (h, k, l) => {
+      const sign = orientationSign(h, k, l);
+      return [sign * h, sign * k, sign * l];
+    },
     planeNormal: (h, k, l) => [h, k, l],
     planeConstant: (h, k, l) => 1 - (h + k + l) / 2
   };
+}
+
+function orientationSign(h, k, l) {
+  const firstNonzero = [h, k, l].find(index => index !== 0);
+  return firstNonzero < 0 ? -1 : 1;
 }
 
 function planeFrame(normalVector, constant) {
@@ -277,24 +292,28 @@ function planeFrame(normalVector, constant) {
 
 /* ---------- plane clipping against the selected unit cell ---------- */
 function clipPlaneToCell(h, k, l, cell) {
-  const normalVector = cell.planeNormal(h, k, l);
-  const frame = planeFrame(normalVector, cell.planeConstant(h, k, l));
+  const [ph, pk, pl] = cell.orientedIndices(h, k, l);
+  const normalVector = cell.planeNormal(ph, pk, pl);
+  const frame = planeFrame(normalVector, cell.planeConstant(ph, pk, pl));
   if (!frame) return [];
   const eps = 1e-9;
   const raw = [];
   for (const [i, j] of cell.edges) {
     const A = cell.vertices[i], B = cell.vertices[j];
-    const fA = h * A[0] + k * A[1] + l * A[2] - 1;
-    const fB = h * B[0] + k * B[1] + l * B[2] - 1;
-    if (Math.abs(fA - fB) < eps) continue;      // edge parallel to plane
-    const t = fA / (fA - fB);
-    if (t >= -eps && t <= 1 + eps) {
-      const point = [
+    const fA = ph * A[0] + pk * A[1] + pl * A[2] - 1;
+    const fB = ph * B[0] + pk * B[1] + pl * B[2] - 1;
+    const addPoint = point => {
+      if (!raw.some(q => Math.hypot(...point.map((value, axis) => value - q[axis])) < 1e-6)) raw.push(point);
+    };
+    if (Math.abs(fA) < eps) addPoint(A);
+    if (Math.abs(fB) < eps) addPoint(B);
+    if ((fA < -eps && fB > eps) || (fA > eps && fB < -eps)) {
+      const t = fA / (fA - fB);
+      addPoint([
         A[0] + t*(B[0]-A[0]),
         A[1] + t*(B[1]-A[1]),
         A[2] + t*(B[2]-A[2])
-      ];
-      if (!raw.some(q => Math.hypot(...point.map((value, axis) => value - q[axis])) < 1e-6)) raw.push(point);
+      ]);
     }
   }
 
@@ -444,6 +463,10 @@ function rebuildScene() {
   $('hcpEquations').hidden = !isHcp;
   $('hcpPresets').hidden = !isHcp;
   $('cubicPresets').hidden = isHcp;
+  $('iControl').hidden = !isHcp;
+  $('i').min = -(+$('h').value) - 3;
+  $('i').max = -(+$('h').value) + 3;
+  $('iV').textContent = $('i').value;
   $('indexHint').textContent = isHcp
     ? 'HCP uses Miller–Bravais indices (h k i l), where i = −(h + k). The c/a ratio is ideal.'
     : 'Cubic structures use Miller indices (h k l).';
@@ -498,7 +521,8 @@ function rebuildScene() {
       });
       group.add(new THREE.Mesh(geo, mat));
 
-      const frame = planeFrame(cell.planeNormal(h, k, l), cell.planeConstant(h, k, l));
+      const [ph, pk, pl] = cell.orientedIndices(h, k, l);
+      const frame = planeFrame(cell.planeNormal(ph, pk, pl), cell.planeConstant(ph, pk, pl));
       const planeOrigin = frame.origin;
       const polygon2D = poly.map(point => {
         const relative = point.map((value, index) => value - planeOrigin[index]);
@@ -506,7 +530,7 @@ function rebuildScene() {
       });
       if ($('showAtoms').checked && $('showSections').checked) {
         for (const atom of atoms) {
-          if (addAtomSection(atom, atomRadius, h, k, l, frame, planeOrigin, polygon2D)) {
+          if (addAtomSection(atom, atomRadius, ph, pk, pl, frame, planeOrigin, polygon2D)) {
             intersectedAtoms++;
           }
         }
@@ -518,7 +542,11 @@ function rebuildScene() {
     dSpacing = denom > 0 ? (1 / denom).toFixed(3) : null;
   }
 
-  const planeLabel = isHcp ? `(${h} ${k} ${-h-k} ${l})` : `(${h} ${k} ${l})`;
+  const i = -h - k;
+  const indexLabel = value => value < 0 ? `<span class="overbar">${-value}</span>` : value;
+  const planeLabel = isHcp
+    ? `(${indexLabel(h)} ${indexLabel(k)} ${indexLabel(i)} ${indexLabel(l)})`
+    : `(${indexLabel(h)} ${indexLabel(k)} ${indexLabel(l)})`;
   $('out1').innerHTML =
     `<b>Plane</b><span>${planeLabel}</span>` +
     `<b>d-spacing</b><span>${dSpacing ? dSpacing + ' · a' : '&mdash;'}</span>` +
@@ -527,14 +555,35 @@ function rebuildScene() {
 }
 
 for (const id of ['h','k','l','showAtoms','showEdges','showPlane','showSections']) {
-  $(id).addEventListener('input', rebuildScene);
-  $(id).addEventListener('change', rebuildScene);
+  $(id).addEventListener('input', () => {
+    if ($('structure').value === 'hcp' && (id === 'h' || id === 'k')) {
+      $('i').value = - (+$('h').value + +$('k').value);
+    }
+    rebuildScene();
+  });
+  $(id).addEventListener('change', () => {
+    if ($('structure').value === 'hcp' && (id === 'h' || id === 'k')) {
+      $('i').value = - (+$('h').value + +$('k').value);
+    }
+    rebuildScene();
+  });
+}
+for (const event of ['input', 'change']) {
+  $('i').addEventListener(event, () => {
+    $('k').value = - (+$('h').value + +$('i').value);
+    rebuildScene();
+  });
 }
 function selectRadiusPlane() {
   const { indices } = radiusPlanes[$('structure').value];
   $('h').value = indices[0];
   $('k').value = indices[1];
-  $('l').value = indices[2];
+  if ($('structure').value === 'hcp') {
+    $('i').value = indices[2];
+    $('l').value = indices[3];
+  } else {
+    $('l').value = indices[2];
+  }
 }
 $('structure').addEventListener('change', () => {
   selectRadiusPlane();
@@ -544,10 +593,17 @@ $('radiusPlane').addEventListener('click', () => {
   selectRadiusPlane();
   rebuildScene();
 });
-document.querySelectorAll('.presets button[data-hkl]').forEach(btn => {
+document.querySelectorAll('.presets button[data-indices]').forEach(btn => {
   btn.addEventListener('click', () => {
-    const [h,k,l] = btn.dataset.hkl.split(',');
-    $('h').value = h; $('k').value = k; $('l').value = l;
+    const indices = btn.dataset.indices.split(',').map(Number);
+    $('h').value = indices[0];
+    $('k').value = indices[1];
+    if ($('structure').value === 'hcp') {
+      $('i').value = indices[2];
+      $('l').value = indices[3];
+    } else {
+      $('l').value = indices[2];
+    }
     rebuildScene();
   });
 });
