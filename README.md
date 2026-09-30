@@ -1,9 +1,13 @@
 # ME382-demos
 Demonstration webpages for ME382, Mechanical Behavior of Materials
 
-## Crystal planes demo
+## Demo library
 
-The standalone page is [`index.html`](index.html). It displays simple-cubic, BCC, FCC, HCP, and diamond-cubic structures as hard spheres sized to touch their nearest neighbors. Select a plane to highlight the circular cross-sections through those spheres. Single-species structures use one atom color; binary compounds use one color per species. The default atom and plane-section colors use the University of Michigan's official web colors: blue `#00274C` and maize `#FFCB05`; binary species B defaults to the secondary palette orange `#D86018`. Colors can be adjusted in the binary controls. A camera-tracking coordinate triad identifies Cartesian `x`, `y`, and `z`; for cubic structures these directions correspond to the `h`, `k`, and `l` plane indices. Hexagonal indices use the reciprocal hexagonal basis instead, as explained above the viewer. The equations above the viewer state the fractional-coordinate plane equation, the representative plane through the cell center, and the interplanar spacing. FCC `{111}` is shown as the triangular lattice plane through three cube corners so its close-packed layer is visible. Each elemental structure includes a 2D contact-plane sketch, with the contacting pair highlighted, crystal-edge dimensions color-matched to their edges, and other sites on that plane greyed out. The accompanying derivation solves directly for the atomic radius in terms of the lattice parameter before substituting into the packing-fraction calculation. Binary sketches likewise show a contacting unlike-species pair within the plane. An optional “Show hidden edges faintly through atoms” control adds translucent unit-cell edges over the space-filling spheres; by default, sphere surfaces occlude hidden edges to preserve depth cues.
+The root [`index.html`](index.html) is the collection's homepage. Its crystal-structures thumbnail depicts the full BCC basis in an orthographic view of a cubic cell. The three edges from the origin are dashed; atoms are layered from lower to higher `x+y+z` coordinates so higher-coordinate sites draw in front. The `(101)` plane passes through four corner atoms and the body-center atom. Each demo lives in its own folder; the crystal structures app is [`crystal-structures/index.html`](crystal-structures/index.html).
+
+### Crystal structures and planes
+
+The app displays simple-cubic, BCC, FCC, HCP, and diamond-cubic structures as hard spheres sized to touch their nearest neighbors. Select a plane to highlight the circular cross-sections through those spheres. Single-species structures use one atom color; binary compounds use one color per species. The default atom and plane-section colors use the University of Michigan's official web colors: blue `#00274C` and maize `#FFCB05`; binary species B defaults to the secondary palette orange `#D86018`. Colors can be adjusted in the binary controls. A camera-tracking coordinate triad identifies Cartesian `x`, `y`, and `z`; for cubic structures these directions correspond to the `h`, `k`, and `l` plane indices. Hexagonal indices use the reciprocal hexagonal basis instead, as explained above the viewer. The equations above the viewer state the fractional-coordinate plane equation, the representative plane through the cell center, and the interplanar spacing. FCC `{111}` is shown as the triangular lattice plane through three cube corners so its close-packed layer is visible. Each elemental structure includes a 2D contact-plane sketch, with the contacting pair highlighted, crystal-edge dimensions color-matched to their edges, and other sites on that plane greyed out. The accompanying derivation solves directly for the atomic radius in terms of the lattice parameter before substituting into the packing-fraction calculation. Binary sketches likewise show a contacting unlike-species pair within the plane. An optional “Show hidden edges faintly through atoms” control adds translucent unit-cell edges over the space-filling spheres; by default, sphere surfaces occlude hidden edges to preserve depth cues.
 
 The University of Michigan web-color values are from its [official color guidelines](https://brand.umich.edu/design-resources/colors/).
 
@@ -16,12 +20,12 @@ Radius references:
 
 Each binary prototype's default mixed-species plane is checked against both sublattices, and the page reports the number of A/B atom centers on the selected plane. Such a mixed-species plane is not always the densest plane: for example, the close-packed FCC `{111}` layers in rock salt and zincblende contain one species at a time.
 
-To preview it on your computer, open the repository in a terminal and run:
+To preview the homepage and demos on your computer, open the repository in a terminal and run:
 
 ```sh
 python3 -m http.server 8000
 ```
 
-Then visit <http://localhost:8000> in a browser. Serving it this way is recommended because the page loads Three.js as a JavaScript module.
+Then visit <http://localhost:8000> in a browser. Open the crystal structures demo from the homepage, or visit <http://localhost:8000/crystal-structures/> directly. Serving it this way is recommended because the app loads Three.js as a JavaScript module.
 
 To publish it with GitHub Pages, push this branch to GitHub, merge it into `main`, then open the repository's **Settings → Pages**. Under **Build and deployment**, choose **Deploy from a branch**, select `main` and `/(root)`, and save. GitHub will provide the published site URL on that settings page.
