@@ -96,7 +96,7 @@ input[type=number],input[type=text]{width:100%;padding:6px;border:1px solid var(
 #axis-gizmo{position:absolute;top:10px;left:10px;z-index:3;width:116px;padding:7px 8px 6px;
   border:1px solid var(--rule);border-radius:8px;background:rgba(255,255,255,.9);
   color:var(--muted);font:11px/1.35 "IBM Plex Sans",sans-serif;pointer-events:none}
-#axis-gizmo svg{display:block;width:76px;height:76px;margin:0 auto 2px}
+#axis-gizmo svg{display:block;width:84px;height:76px;margin:0 auto 2px}
 #axis-gizmo p{margin:0;text-align:center}
 .derivation-steps{display:grid;gap:10px}
 .derivation-step{margin:0;color:var(--body);font-size:14px;line-height:1.6}
@@ -127,7 +127,7 @@ input[type=number],input[type=text]{width:100%;padding:6px;border:1px solid var(
     <div id="cubicEquations" class="equations">
       <h3>Plane coordinates and spacing · cubic</h3>
       <div class="math-display" data-display="true" data-tex="\begin{aligned} hx+ky+lz&=n,\quad n\in\mathbb{Z},\\ n_{\mathrm{center}}&=\frac{h+k+l}{2},\\ d_{hkl}&=\frac{a}{\sqrt{h^2+k^2+l^2}}. \end{aligned}"></div>
-      <p class="given"><span data-tex="x,y,z"></span> are fractional coordinates along the cubic axes. Integer <span data-tex="n"></span> labels the lattice-plane family; the displayed centered representative has <span data-tex="n_{\mathrm{center}}"></span>, which need not be an integer.</p>
+      <p class="given"><span data-tex="x,y,z"></span> are fractional coordinates along the cubic axes. Integer <span data-tex="n"></span> labels the lattice-plane family; the applet normally shows the centered representative <span data-tex="n_{\mathrm{center}}"></span>. For FCC <span data-tex="\{111\}"></span>, it instead shows a triangular lattice plane through three cell corners.</p>
     </div>
     <div id="hcpEquations" class="equations" hidden>
       <h3>Plane coordinates and spacing · hexagonal</h3>
@@ -203,18 +203,18 @@ input[type=number],input[type=text]{width:100%;padding:6px;border:1px solid var(
 
       <div id="scene-container">
         <div id="axis-gizmo" aria-label="Camera-tracking Cartesian coordinate axes">
-          <svg viewBox="0 0 76 76" role="img" aria-label="Cartesian x, y, and z axes">
+          <svg viewBox="0 0 84 76" role="img" aria-label="Cartesian x, y, and z axes">
             <defs>
-              <marker id="axisArrowX" markerWidth="7" markerHeight="7" refX="5.5" refY="3.5" orient="auto"><path d="M0,0 L7,3.5 L0,7 Z" fill="#c34755"/></marker>
-              <marker id="axisArrowY" markerWidth="7" markerHeight="7" refX="5.5" refY="3.5" orient="auto"><path d="M0,0 L7,3.5 L0,7 Z" fill="#25845f"/></marker>
-              <marker id="axisArrowZ" markerWidth="7" markerHeight="7" refX="5.5" refY="3.5" orient="auto"><path d="M0,0 L7,3.5 L0,7 Z" fill="#347bb5"/></marker>
+              <marker id="axisArrowX" markerWidth="5" markerHeight="5" refX="4" refY="2.5" orient="auto"><path d="M0,0 L5,2.5 L0,5 Z" fill="#c34755"/></marker>
+              <marker id="axisArrowY" markerWidth="5" markerHeight="5" refX="4" refY="2.5" orient="auto"><path d="M0,0 L5,2.5 L0,5 Z" fill="#25845f"/></marker>
+              <marker id="axisArrowZ" markerWidth="5" markerHeight="5" refX="4" refY="2.5" orient="auto"><path d="M0,0 L5,2.5 L0,5 Z" fill="#347bb5"/></marker>
             </defs>
             <circle cx="38" cy="39" r="2.5" fill="#52616a"/>
-            <line id="axisX" x1="38" y1="39" x2="62" y2="39" stroke="#c34755" stroke-width="2.4" marker-end="url(#axisArrowX)"/>
-            <line id="axisY" x1="38" y1="39" x2="38" y2="15" stroke="#25845f" stroke-width="2.4" marker-end="url(#axisArrowY)"/>
-            <line id="axisZ" x1="38" y1="39" x2="22" y2="55" stroke="#347bb5" stroke-width="2.4" marker-end="url(#axisArrowZ)"/>
+            <line id="axisX" x1="38" y1="39" x2="68" y2="39" stroke="#c34755" stroke-width="2.4" marker-end="url(#axisArrowX)"/>
+            <line id="axisY" x1="38" y1="39" x2="38" y2="9" stroke="#25845f" stroke-width="2.4" marker-end="url(#axisArrowY)"/>
+            <line id="axisZ" x1="38" y1="39" x2="17" y2="60" stroke="#347bb5" stroke-width="2.4" marker-end="url(#axisArrowZ)"/>
             <text id="axisXLabel" x="65" y="41" fill="#c34755" font-size="10" font-weight="700">x</text>
-            <text id="axisYLabel" x="38" y="11" fill="#25845f" font-size="10" font-weight="700">y</text>
+            <text id="axisYLabel" x="44" y="11" fill="#25845f" font-size="10" font-weight="700">y</text>
             <text id="axisZLabel" x="16" y="62" fill="#347bb5" font-size="10" font-weight="700">z</text>
           </svg>
           <p id="axisHint">Cubic: x ↔ h, y ↔ k, z ↔ l</p>
@@ -391,7 +391,8 @@ function generateAtoms(structure) {
   }
   if (structure === 'fcc') {
     [[0.5,0.5,0],[0.5,0,0.5],[0,0.5,0.5],
-     [0.5,0.5,1],[0.5,1,0.5],[1,0.5,0.5]].forEach(p => atoms.push({ pos: p, type: 'face' }));
+     [0.5,0.5,1],[0.5,1,0.5],[1,0.5,0.5]]
+      .forEach(p => atoms.push({ pos: p, type: 'corner' }));
   }
   if (structure === 'diamond') {
     [[0.25,0.25,0.25],[0.25,0.75,0.75],
@@ -728,7 +729,8 @@ function makeCell(structure) {
       return [sign * h, sign * k, sign * l];
     },
     planeNormal: (h, k, l) => [h, k, l],
-    planeConstant: () => 0
+    planeConstant: (h, k, l) =>
+      structure === 'fcc' && Math.abs(h) === 1 && Math.abs(k) === 1 && Math.abs(l) === 1 ? -0.5 : 0
   };
 }
 
@@ -846,16 +848,13 @@ function updateAxisGizmo() {
   const inverseCamera = camera.quaternion.clone().invert();
   for (const { axis, vector } of axisVectors) {
     const direction = vector.clone().applyQuaternion(inverseCamera);
-    const x = 38 + direction.x * 26, y = 39 - direction.y * 26;
+    const x = 38 + direction.x * 30, y = 39 - direction.y * 30;
     const line = $(`axis${axis}`);
     const label = $(`axis${axis}Label`);
     line.setAttribute('x2', x.toFixed(1));
     line.setAttribute('y2', y.toFixed(1));
-    label.setAttribute('x', Math.max(5, Math.min(69, x + Math.sign(direction.x || 1) * 5)).toFixed(1));
-    label.setAttribute('y', Math.max(9, Math.min(70, y - Math.sign(direction.y || 1) * 3)).toFixed(1));
-    const opacity = direction.z <= 0 ? 1 : 0.38;
-    line.setAttribute('opacity', opacity);
-    label.setAttribute('opacity', opacity);
+    label.setAttribute('x', (axis === 'Y' ? x + 6 : Math.max(5, Math.min(69, x + Math.sign(direction.x || 1) * 5))).toFixed(1));
+    label.setAttribute('y', Math.max(9, Math.min(70, axis === 'Y' ? y + 4 : y - Math.sign(direction.y || 1) * 3)).toFixed(1));
   }
 }
 
@@ -993,9 +992,12 @@ function rebuildScene() {
   $('i').min = -(+$('h').value) - 3;
   $('i').max = -(+$('h').value) + 3;
   $('iV').textContent = $('i').value;
+  const isFccClosePackedPlane = structure === 'fcc' && Math.abs(h) === 1 && Math.abs(k) === 1 && Math.abs(l) === 1;
   $('indexHint').textContent = isHexagonal
     ? 'Hexagonal structures use Miller–Bravais indices (h k i l), where i = −(h + k). The displayed plane passes through the cell center.'
-    : 'Cubic structures use Miller indices (h k l). The displayed plane passes through the cell center.';
+    : isFccClosePackedPlane
+      ? 'Cubic structures use Miller indices (h k l). The FCC {111} close-packed section is shown as a triangular lattice plane.'
+      : 'Cubic structures use Miller indices (h k l). The displayed plane passes through the cell center.';
   const radiusPlane = radiusPlanes[structure];
   if (isBinary) {
     $('radiusPlane').hidden = true;
