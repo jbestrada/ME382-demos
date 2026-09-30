@@ -165,6 +165,7 @@ input[type=number],input[type=text]{width:100%;padding:6px;border:1px solid var(
 
         <label class="chk"><input id="showAtoms" type="checkbox" checked> Show atoms</label>
         <label class="chk"><input id="showEdges" type="checkbox" checked> Show unit cell edges</label>
+        <label class="chk"><input id="edgesThroughAtoms" type="checkbox"> Show hidden edges faintly through atoms</label>
         <label class="chk"><input id="showPlane" type="checkbox" checked> Show plane</label>
         <label class="chk"><input id="showSections" type="checkbox" checked> Highlight plane sections through atoms</label>
 
@@ -805,6 +806,15 @@ function rebuildScene() {
     const geometry = new THREE.BufferGeometry();
     geometry.setAttribute('position', new THREE.Float32BufferAttribute(edgePositions, 3));
     overlayLayer.add(new THREE.LineSegments(geometry, new THREE.LineBasicMaterial({ color: 0x8c97a3 })));
+    if ($('edgesThroughAtoms').checked && $('showAtoms').checked) {
+      const ghostMaterial = new THREE.LineBasicMaterial({
+        color: 0x8c97a3, transparent: true, opacity: 0.28,
+        depthTest: false, depthWrite: false
+      });
+      const ghostEdges = new THREE.LineSegments(geometry.clone(), ghostMaterial);
+      ghostEdges.renderOrder = 1;
+      overlayLayer.add(ghostEdges);
+    }
   }
 
   // atoms
@@ -889,7 +899,7 @@ function rebuildScene() {
     planeSiteRow;
 }
 
-for (const id of ['h','k','l','showAtoms','showEdges','showPlane','showSections']) {
+for (const id of ['h','k','l','showAtoms','showEdges','edgesThroughAtoms','showPlane','showSections']) {
   $(id).addEventListener('input', () => {
     if ($('structure').value === 'hcp' && (id === 'h' || id === 'k')) {
       $('i').value = - (+$('h').value + +$('k').value);
