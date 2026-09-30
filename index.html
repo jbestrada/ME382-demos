@@ -73,10 +73,37 @@ input[type=number],input[type=text]{width:100%;padding:6px;border:1px solid var(
 .out b{font-weight:600}
 .overbar{text-decoration:overline}
 #scene-container{
-  width:100%;aspect-ratio:1/1;max-width:480px;margin:0 auto;
+  position:relative;width:100%;aspect-ratio:1/1;max-width:480px;margin:0 auto;
   border-radius:8px;overflow:hidden;background:var(--ground);border:1px solid var(--rule)
 }
-#cubicEquations{display:contents}
+.equations{display:grid;flex:1 1 100%;gap:6px;margin:8px 0 12px;min-width:0}
+.equations h3{margin:0;color:var(--muted);font:600 11px/1.4 "IBM Plex Sans",sans-serif;
+  letter-spacing:.1em;text-transform:uppercase}
+.math-display{overflow-x:auto;color:var(--ink)}
+.math-display .katex-display{margin:.3em 0;text-align:left}
+.derivation-grid{display:grid;grid-template-columns:minmax(260px,380px) minmax(260px,1fr);
+  gap:24px;align-items:start;margin:18px 0}
+@media (max-width:760px){.derivation-grid{grid-template-columns:1fr}}
+.contact-figure{margin:0;padding:12px;border:1px solid var(--rule);border-radius:8px;background:var(--ground)}
+.contact-figure svg{display:block;width:100%;height:auto}
+.contact-figure figcaption{margin-top:8px;color:var(--muted);font-size:12px;line-height:1.5}
+.contact-figure .atom{fill:#dcecf2;stroke:#3d7ea6;stroke-width:2}
+.contact-figure .center{fill:#294957}
+.contact-figure .construction{stroke:#8c97a3;stroke-width:1.3;stroke-dasharray:4 4;fill:none}
+.contact-figure .dimension{stroke:#495861;stroke-width:1.4;fill:none}
+.contact-figure .cell-line{stroke:#b2bcc2;stroke-width:1.3;fill:none}
+.contact-figure text{fill:var(--ink);font:13px "IBM Plex Sans",sans-serif}
+#axis-gizmo{position:absolute;top:10px;left:10px;z-index:3;width:116px;padding:7px 8px 6px;
+  border:1px solid var(--rule);border-radius:8px;background:rgba(255,255,255,.9);
+  color:var(--muted);font:11px/1.35 "IBM Plex Sans",sans-serif;pointer-events:none}
+#axis-gizmo svg{display:block;width:76px;height:76px;margin:0 auto 2px}
+#axis-gizmo p{margin:0;text-align:center}
+.derivation-steps{display:grid;gap:10px}
+.derivation-step{margin:0;color:var(--body);font-size:14px;line-height:1.6}
+.derivation-step b{color:var(--ink)}
+.derivation-step .math-display{margin:5px 0 0}
+.derivation-note{padding:10px 12px;border-left:3px solid var(--b);background:var(--ground);
+  color:var(--muted);font-size:13px;line-height:1.55}
 .legend{display:flex;flex-wrap:wrap;gap:8px 18px;margin:12px 0 0;color:var(--muted);font-size:12px}
 .legend span{display:inline-flex;align-items:center;gap:6px}
 .legend i{width:12px;height:12px;border-radius:3px;display:inline-block}
@@ -97,13 +124,15 @@ input[type=number],input[type=text]{width:100%;padding:6px;border:1px solid var(
   </div>
 
   <div class="eqs">
-    <div id="cubicEquations">
-      <span data-tex="hx+ky+lz=n \quad \text{(plane through lattice, in units of } a\text{)}"></span>
-      <span data-tex="d_{hkl}=\dfrac{a}{\sqrt{h^2+k^2+l^2}} \quad \text{(cubic systems)}"></span>
-      <span data-tex="r_{\mathrm{SC}}=\frac{a}{2},\quad r_{\mathrm{BCC}}=\frac{\sqrt3\,a}{4},\quad r_{\mathrm{FCC}}=\frac{\sqrt2\,a}{4},\quad r_{\mathrm{diamond}}=\frac{\sqrt3\,a}{8}"></span>
+    <div id="cubicEquations" class="equations">
+      <h3>Plane coordinates and spacing · cubic</h3>
+      <div class="math-display" data-display="true" data-tex="\begin{aligned} hx+ky+lz&=n,\quad n\in\mathbb{Z},\\ n_{\mathrm{center}}&=\frac{h+k+l}{2},\\ d_{hkl}&=\frac{a}{\sqrt{h^2+k^2+l^2}}. \end{aligned}"></div>
+      <p class="given"><span data-tex="x,y,z"></span> are fractional coordinates along the cubic axes. Integer <span data-tex="n"></span> labels the lattice-plane family; the displayed centered representative has <span data-tex="n_{\mathrm{center}}"></span>, which need not be an integer.</p>
     </div>
-    <div id="hcpEquations" hidden>
-      <span data-tex="h+k+i=0,\quad \frac{1}{d_{hkil}^{\,2}}=\frac{4}{3a^2}(h^2+hk+k^2)+\frac{l^2}{c^2},\quad \frac{c}{a}=\sqrt{\frac{8}{3}},\quad r_{\mathrm{HCP}}=\frac{a}{2}"></span>
+    <div id="hcpEquations" class="equations" hidden>
+      <h3>Plane coordinates and spacing · hexagonal</h3>
+      <div class="math-display" data-display="true" data-tex="\begin{aligned} h+k+i&=0,\\ hu+kv+lw&=n,\quad n_{\mathrm{center}}=\frac{l}{2},\\ \frac{1}{d_{hkil}^{\,2}}&=\frac{4}{3a^2}(h^2+hk+k^2)+\frac{l^2}{c^2}. \end{aligned}"></div>
+        <p class="given"><span data-tex="u,v,w"></span> are fractional coordinates along the hexagonal <span data-tex="a_1,a_2,c"></span> directions. Integer <span data-tex="n"></span> labels a lattice plane; the displayed centered representative uses <span data-tex="n_{\mathrm{center}}=l/2"></span>. The Cartesian triad is not the same as the hexagonal index directions.</p>
     </div>
   </div>
 
@@ -172,7 +201,25 @@ input[type=number],input[type=text]{width:100%;padding:6px;border:1px solid var(
         <div class="out" id="out1"></div>
       </div>
 
-      <div id="scene-container"></div>
+      <div id="scene-container">
+        <div id="axis-gizmo" aria-label="Camera-tracking Cartesian coordinate axes">
+          <svg viewBox="0 0 76 76" role="img" aria-label="Cartesian x, y, and z axes">
+            <defs>
+              <marker id="axisArrowX" markerWidth="7" markerHeight="7" refX="5.5" refY="3.5" orient="auto"><path d="M0,0 L7,3.5 L0,7 Z" fill="#c34755"/></marker>
+              <marker id="axisArrowY" markerWidth="7" markerHeight="7" refX="5.5" refY="3.5" orient="auto"><path d="M0,0 L7,3.5 L0,7 Z" fill="#25845f"/></marker>
+              <marker id="axisArrowZ" markerWidth="7" markerHeight="7" refX="5.5" refY="3.5" orient="auto"><path d="M0,0 L7,3.5 L0,7 Z" fill="#347bb5"/></marker>
+            </defs>
+            <circle cx="38" cy="39" r="2.5" fill="#52616a"/>
+            <line id="axisX" x1="38" y1="39" x2="62" y2="39" stroke="#c34755" stroke-width="2.4" marker-end="url(#axisArrowX)"/>
+            <line id="axisY" x1="38" y1="39" x2="38" y2="15" stroke="#25845f" stroke-width="2.4" marker-end="url(#axisArrowY)"/>
+            <line id="axisZ" x1="38" y1="39" x2="22" y2="55" stroke="#347bb5" stroke-width="2.4" marker-end="url(#axisArrowZ)"/>
+            <text id="axisXLabel" x="65" y="41" fill="#c34755" font-size="10" font-weight="700">x</text>
+            <text id="axisYLabel" x="38" y="11" fill="#25845f" font-size="10" font-weight="700">y</text>
+            <text id="axisZLabel" x="16" y="62" fill="#347bb5" font-size="10" font-weight="700">z</text>
+          </svg>
+          <p id="axisHint">Cubic: x ↔ h, y ↔ k, z ↔ l</p>
+        </div>
+      </div>
     </div>
     <div class="legend" aria-label="Visualization legend">
       <span><i style="background:#2e8a55"></i>Plane within the unit cell</span>
@@ -209,7 +256,9 @@ const BINARY_STRUCTURES = {
     ],
     latticeParameter: (a, b) => 2 * (a + b),
     volume: a => a ** 3,
-    relation: 'Nearest unlike neighbors touch along a cube edge: a = 2(rA + rB).'
+    relation: 'Nearest unlike neighbors touch along a cube edge.',
+    contactMath: String.raw`\frac{a}{2}=r_A+r_B\quad\Longrightarrow\quad a=2(r_A+r_B)`,
+    contactText: 'The unlike-neighbor separation in the rock-salt cell is half an edge.'
   },
   'binary-cscl': {
     name: 'CsCl (B2)',
@@ -223,7 +272,9 @@ const BINARY_STRUCTURES = {
     ],
     latticeParameter: (a, b) => 2 * (a + b) / Math.sqrt(3),
     volume: a => a ** 3,
-    relation: 'Nearest unlike neighbors touch along a body diagonal: √3 a = 2(rA + rB).'
+    relation: 'Nearest unlike neighbors touch along a body diagonal.',
+    contactMath: String.raw`\frac{\sqrt{3}\,a}{2}=r_A+r_B\quad\Longrightarrow\quad a=\frac{2(r_A+r_B)}{\sqrt{3}}`,
+    contactText: 'The body-center to corner separation is half the body diagonal.'
   },
   'binary-zincblende': {
     name: 'ZnS (zincblende)',
@@ -237,7 +288,9 @@ const BINARY_STRUCTURES = {
     ],
     latticeParameter: (a, b) => 4 * (a + b) / Math.sqrt(3),
     volume: a => a ** 3,
-    relation: 'Nearest unlike neighbors touch along a quarter body diagonal: √3 a / 4 = rA + rB.'
+    relation: 'Nearest unlike neighbors touch along a tetrahedral bond.',
+    contactMath: String.raw`\frac{\sqrt{3}\,a}{4}=r_A+r_B\quad\Longrightarrow\quad a=\frac{4(r_A+r_B)}{\sqrt{3}}`,
+    contactText: 'The zincblende basis offset gives the nearest-neighbor bond length.'
   },
   'binary-wurtzite': {
     name: 'ZnO (wurtzite)',
@@ -252,15 +305,17 @@ const BINARY_STRUCTURES = {
     ],
     latticeParameter: (a, b) => Math.sqrt(8 / 3) * (a + b),
     volume: a => 3 * Math.sqrt(3) / 2 * a ** 2 * HCP_C_OVER_A * a,
-    relation: 'Ideal tetrahedral coordination: √(3/8) a = rA + rB, with c/a = √(8/3) and u = 3/8.'
+    relation: 'Ideal tetrahedral coordination with c/a = √(8/3) and internal coordinate u = 3/8.',
+    contactMath: String.raw`\frac{3c}{8}=r_A+r_B,\quad \frac{c}{a}=\sqrt{\frac{8}{3}}\quad\Longrightarrow\quad a=\sqrt{\frac{8}{3}}(r_A+r_B)`,
+    contactText: 'For the ideal wurtzite basis, the vertical component between unlike neighbors is 3c/8.'
   }
 };
 const radiusPlanes = {
-  sc: { indices: [1, 0, 0], label: '(100)', relation: '2r = a (nearest neighbors along a cube edge).' },
-  bcc: { indices: [1, 1, 0], label: '(110)', relation: '4r = √3 a (the body-diagonal contact row lies in this plane).' },
-  fcc: { indices: [1, 1, 1], label: '(111)', relation: '4r = √2 a (the face-diagonal contact row lies in this plane).' },
-  hcp: { indices: [0, 0, 0, 1], label: '(0001)', relation: '2r = a (nearest neighbors in the basal plane).' },
-  diamond: { indices: [1, 1, 0], label: '(110)', relation: '8r = √3 a (a nearest-neighbor bond lies in this plane).' }
+  sc: { indices: [1, 0, 0], label: '(100)', relation: 'Nearest neighbors touch along a cube edge.', math: String.raw`a=2r` },
+  bcc: { indices: [1, 1, 0], label: '(110)', relation: 'The body diagonal contains two contact intervals.', math: String.raw`\sqrt{3}\,a=4r` },
+  fcc: { indices: [1, 1, 1], label: '(111)', relation: 'The face diagonal contains two contact intervals.', math: String.raw`\sqrt{2}\,a=4r` },
+  hcp: { indices: [0, 0, 0, 1], label: '(0001)', relation: 'Nearest neighbors touch in the basal plane.', math: String.raw`a=2r` },
+  diamond: { indices: [1, 1, 0], label: '(110)', relation: 'A nearest-neighbor bond lies in this plane.', math: String.raw`2r=\frac{\sqrt{3}\,a}{4}` }
 };
 
 /* ---------- lattice generation ---------- */
@@ -388,6 +443,87 @@ function escapeHtml(value) {
   })[character]);
 }
 
+function mathBlock(tex) {
+  return `<div class="math-display" data-display="true" data-tex="${escapeHtml(tex)}"></div>`;
+}
+
+function inlineMath(tex) {
+  return `<span data-tex="${escapeHtml(tex)}"></span>`;
+}
+
+function renderMath(root = document) {
+  const katex = window.katex;
+  root.querySelectorAll('[data-tex]').forEach(element => {
+    if (katex) {
+      katex.render(element.dataset.tex, element, {
+        displayMode: element.dataset.display === 'true',
+        throwOnError: false
+      });
+    } else {
+      element.textContent = element.dataset.tex;
+    }
+  });
+}
+
+function elementContactFigure(structure, caption) {
+  const marker = '<defs><marker id="dimensionArrow" markerWidth="7" markerHeight="7" refX="3.5" refY="3.5" orient="auto"><path d="M7,0 L0,3.5 L7,7 Z" fill="#495861"/></marker></defs>';
+  const circle = (x, y, radius) =>
+    `<circle class="atom" cx="${x}" cy="${y}" r="${radius}"/><circle class="center" cx="${x}" cy="${y}" r="2.5"/>`;
+  let drawing = '';
+  let aria = '';
+  if (structure === 'sc') {
+    aria = 'Top view of a simple-cubic (100) square net with touching spheres along an edge.';
+    drawing = `<path class="cell-line" d="M112 54H168V110H112Z"/>` +
+      [[112,54],[168,54],[112,110],[168,110]].map(([x,y]) => circle(x,y,28)).join('') +
+      `<line class="construction" x1="112" y1="54" x2="112" y2="174"/><line class="construction" x1="168" y1="54" x2="168" y2="174"/>` +
+      `<line class="dimension" x1="117" y1="171" x2="163" y2="171" marker-start="url(#dimensionArrow)" marker-end="url(#dimensionArrow)"/>` +
+      `<text x="140" y="164" text-anchor="middle">a = 2r</text>`;
+  } else if (structure === 'bcc') {
+    aria = 'Body-centered-cubic (110) section with corner and body-center atoms touching along the body diagonal.';
+    drawing = `<line class="construction" x1="44" y1="91" x2="260" y2="91"/>` +
+      [[82,91],[154,91],[226,91]].map(([x,y]) => circle(x,y,36)).join('') +
+      `<line class="construction" x1="82" y1="130" x2="82" y2="168"/><line class="construction" x1="154" y1="130" x2="154" y2="168"/><line class="construction" x1="226" y1="130" x2="226" y2="168"/>` +
+      `<line class="dimension" x1="87" y1="162" x2="149" y2="162" marker-start="url(#dimensionArrow)" marker-end="url(#dimensionArrow)"/>` +
+      `<line class="dimension" x1="159" y1="162" x2="221" y2="162" marker-start="url(#dimensionArrow)" marker-end="url(#dimensionArrow)"/>` +
+      `<text x="118" y="154" text-anchor="middle">2r</text><text x="190" y="154" text-anchor="middle">2r</text>` +
+      `<text x="154" y="190" text-anchor="middle">body diagonal = 4r = √3 a</text>`;
+  } else if (structure === 'fcc' || structure === 'hcp') {
+    aria = structure === 'fcc'
+      ? 'Face-centered-cubic (111) close-packed triangular net with nearest neighbors touching.'
+      : 'Hexagonal close-packed (0001) basal triangular net with nearest neighbors touching.';
+    drawing = `<path class="cell-line" d="M112 72L170 72L141 122.23Z"/>` +
+      [[112,72],[170,72],[141,122.23]].map(([x,y]) => circle(x,y,29)).join('') +
+      `<line class="dimension" x1="116" y1="48" x2="166" y2="48" marker-start="url(#dimensionArrow)" marker-end="url(#dimensionArrow)"/>` +
+      `<text x="141" y="40" text-anchor="middle">${structure === 'fcc' ? 'a/√2 = 2r' : 'a = 2r'}</text>`;
+  } else {
+    aria = 'Diamond-cubic (110) section containing a nearest-neighbor bond between touching atoms.';
+    drawing = `<line class="construction" x1="76" y1="96" x2="284" y2="96"/>` +
+      `${circle(135,96,34)}${circle(203,96,34)}` +
+      `<line class="dimension" x1="140" y1="153" x2="198" y2="153" marker-start="url(#dimensionArrow)" marker-end="url(#dimensionArrow)"/>` +
+      `<text x="169" y="146" text-anchor="middle">bond = √3 a/4 = 2r</text>`;
+  }
+  return `<figure class="contact-figure"><svg viewBox="0 0 344 220" role="img" aria-label="${aria}">${marker}${drawing}</svg>` +
+    `<figcaption><b>2D contact sketch · ${escapeHtml(structure.toUpperCase())}</b><br>${escapeHtml(caption)} The circles represent hard-sphere sections; marked centers are tangent at contact.</figcaption></figure>`;
+}
+
+function binaryContactFigure(radiusA, radiusB, colorA, colorB) {
+  const scale = 90 / (radiusA + radiusB);
+  const ra = radiusA * scale, rb = radiusB * scale;
+  const cxA = 122, cxB = cxA + ra + rb, cy = 96;
+  const colorAClean = /^#[0-9a-f]{6}$/i.test(colorA) ? colorA : '#3d7ea6';
+  const colorBClean = /^#[0-9a-f]{6}$/i.test(colorB) ? colorB : '#d97a2b';
+  return `<figure class="contact-figure"><svg viewBox="0 0 344 250" role="img" aria-label="Two unlike hard spheres tangent at a contact, with center spacing equal to the sum of their radii.">` +
+    `<defs><marker id="binaryDimensionArrow" markerWidth="7" markerHeight="7" refX="3.5" refY="3.5" orient="auto"><path d="M7,0 L0,3.5 L7,7 Z" fill="#495861"/></marker></defs>` +
+    `<circle cx="${cxA}" cy="${cy}" r="${ra}" fill="${colorAClean}" fill-opacity=".28" stroke="${colorAClean}" stroke-width="2.5"/>` +
+    `<circle cx="${cxB}" cy="${cy}" r="${rb}" fill="${colorBClean}" fill-opacity=".28" stroke="${colorBClean}" stroke-width="2.5"/>` +
+    `<circle class="center" cx="${cxA}" cy="${cy}" r="3"/><circle class="center" cx="${cxB}" cy="${cy}" r="3"/>` +
+    `<line class="construction" x1="${cxA}" y1="${cy}" x2="${cxB}" y2="${cy}"/>` +
+    `<line class="dimension" x1="${cxA}" y1="224" x2="${cxB}" y2="224" marker-start="url(#binaryDimensionArrow)" marker-end="url(#binaryDimensionArrow)"/>` +
+    `<text x="${(cxA+cxB)/2}" y="214" text-anchor="middle">center spacing = rA + rB</text>` +
+    `<text x="${cxA}" y="${cy+ra+18}" text-anchor="middle">A</text><text x="${cxB}" y="${cy+rb+18}" text-anchor="middle">B</text>` +
+    `</svg><figcaption><b>Unlike-neighbor contact</b><br>At tangency, the center-to-center distance is <span data-tex="r_A+r_B"></span>. Sphere sizes are drawn to scale from the selected radii.</figcaption></figure>`;
+}
+
 function binaryPlaneSiteCounts(structure, h, k, l, cell) {
   const [ph, pk, pl] = cell.orientedIndices(h, k, l);
   const hexagonal = structure === 'binary-wurtzite';
@@ -426,6 +562,13 @@ function binaryPlaneSiteCounts(structure, h, k, l, cell) {
 
 function renderStructureInfo(structure, binary) {
   const info = $('structureInfo');
+  const infoKey = binary?.error
+    ? `${structure}:error:${binary.error}`
+    : binary
+      ? [structure, binary.compound.id, binary.radiusA, binary.radiusB, binary.massA, binary.massB, $('colorA').value, $('colorB').value].join(':')
+      : structure;
+  if (info.dataset.renderKey === infoKey) return;
+  info.dataset.renderKey = infoKey;
   if (binary?.error) {
     info.innerHTML = `<p class="bad">${binary.error}</p>`;
     return;
@@ -436,55 +579,102 @@ function renderStructureInfo(structure, binary) {
     const labelB = escapeHtml(compound.B);
     const volume = config.volume(latticeParameter);
     info.innerHTML =
-      `<p><b>${compound.label}</b> uses the ${config.prototype} prototype. ${config.relation}</p>` +
-      `<p>With the entered radii, <b>a = ${latticeParameter.toFixed(3)} Å</b>` +
-      `${structure === 'binary-wurtzite' ? ` and c = ${(HCP_C_OVER_A * latticeParameter).toFixed(3)} Å` : ''}.</p>` +
+      `<p><b>${escapeHtml(compound.label)}</b> uses the ${config.prototype} prototype. ${config.relation}</p>` +
+      `<div class="derivation-grid">${binaryContactFigure(radiusA, radiusB, $('colorA').value, $('colorB').value)}` +
+      `<div class="derivation-steps"><p class="derivation-step"><b>1. Identify the unlike-neighbor contact.</b> ${config.contactText}</p>` +
+      `${mathBlock(config.contactMath)}` +
+      `<p class="derivation-step"><b>2. Solve for the lattice parameter.</b> With the selected radii, <b>a = ${latticeParameter.toFixed(3)} Å</b>` +
+      `${structure === 'binary-wurtzite' ? ` and <b>c = ${(HCP_C_OVER_A * latticeParameter).toFixed(3)} Å</b>` : ''}.</p>` +
+      `<p class="derivation-step">The sphere centers touch in this idealized model, so their separation is the sum of their radii.</p></div></div>` +
       `<p><b>Radius convention:</b> ${compound.radiusNote} ` +
       `<a href="${compound.radiusSource}" target="_blank" rel="noopener noreferrer">Source</a></p>` +
-      `<p>Radius ratios: r<sub>${labelA}</sub>/a = ${(radiusA / latticeParameter).toFixed(4)}; ` +
-      `r<sub>${labelB}</sub>/a = ${(radiusB / latticeParameter).toFixed(4)}.</p>` +
-      `<p>There are ${config.formulaUnits} formula units per displayed unit cell, so ` +
-      `ρ = [Z(M<sub>${labelA}</sub> + M<sub>${labelB}</sub>)/N<sub>A</sub>]/` +
-      `[V<sub>cell</sub> × 10<sup>−24</sup> cm³/Å³] = <b>${density.toFixed(3)} g/cm³</b>. ` +
-      `Using M<sub>${labelA}</sub> = ${massA.toFixed(3)} and M<sub>${labelB}</sub> = ${massB.toFixed(3)} g/mol, ` +
-      `V<sub>cell</sub> = ${volume.toFixed(3)} Å³, and 1 Å³ = 10<sup>−24</sup> cm³.</p>` +
-      `<p>Hard-sphere packing fraction = Z(4π/3)(r<sub>${labelA}</sub>³ + r<sub>${labelB}</sub>³)/V<sub>cell</sub> ` +
-      `= <b>${(100 * packingFraction).toFixed(2)}%</b>. ` +
-      `This is an ideal radius-sum model; actual crystals need not have touching hard spheres, and edited radii can imply overlap.</p>`;
+      `<p>There are ${config.formulaUnits} formula units per displayed unit cell.</p>` +
+      `${mathBlock(String.raw`\rho=\frac{Z(M_A+M_B)}{N_A V_{\mathrm{cell}}}`)}` +
+      `<p>Use <span data-tex="V_{\mathrm{cell}}"></span> in cm³; the conversion is 1 Å³ = 10<sup>−24</sup> cm³. For ${labelA} and ${labelB}, using molar masses ${massA.toFixed(3)} and ${massB.toFixed(3)} g/mol and cell volume ${volume.toFixed(3)} Å³, the model gives <b>ρ = ${density.toFixed(3)} g/cm³</b>.</p>` +
+      `${mathBlock(String.raw`\eta=\frac{Z\left(\frac{4\pi}{3}r_A^3+\frac{4\pi}{3}r_B^3\right)}{V_{\mathrm{cell}}}=${(100 * packingFraction).toFixed(2)}\%`)}` +
+      `<p>This is an ideal radius-sum model; actual crystals need not have touching hard spheres, and edited radii can imply overlap.</p>`;
+    renderMath(info);
     return;
   }
 
   const structures = {
     sc: {
-      name: 'Simple cubic', relation: 'Nearest neighbors touch along the cube edge: a = 2r, hence r/a = 1/2.',
-      count: 1, ratio: 0.5, volume: 1, contact: 'a cube edge'
+      name: 'Simple cubic', plane: '(100)', diagram: 'sc',
+      planeDescription: 'The (100) section contains rows of corner atoms along the cube edges.',
+      contactDescription: 'Adjacent corner-atom centers in that row are separated by one cell edge.',
+      count: 1, ratio: 0.5, volume: 1,
+      contactMath: String.raw`\text{nearest-neighbor spacing}=a=2r`,
+      radiusMath: String.raw`\boxed{\frac{r}{a}=\frac{1}{2}}`,
+      packingMath: String.raw`\eta=\frac{1\cdot\frac{4\pi}{3}r^3}{a^3}
+        =\frac{\frac{4\pi}{3}(a/2)^3}{a^3}
+        =\frac{\pi}{6}\approx 52.36\%`
     },
     bcc: {
-      name: 'Body-centered cubic', relation: 'Nearest neighbors touch along the body diagonal: √3 a = 4r, hence r/a = √3/4.',
-      count: 2, ratio: Math.sqrt(3) / 4, volume: 1, contact: 'the body diagonal'
+      name: 'Body-centered cubic', plane: '(110)', diagram: 'bcc',
+      planeDescription: 'The (110) section contains a row of corner and body-center atoms along a body diagonal.',
+      contactDescription: 'A body diagonal crosses two touching intervals: corner to body center, then body center to corner.',
+      count: 2, ratio: Math.sqrt(3) / 4, volume: 1,
+      contactMath: String.raw`d_{\mathrm{nn}}=\frac{\sqrt{3}\,a}{2}=2r,\quad
+        \text{whole body diagonal}=\sqrt{3}\,a=4r`,
+      radiusMath: String.raw`\boxed{\frac{r}{a}=\frac{\sqrt{3}}{4}}`,
+      packingMath: String.raw`\eta=\frac{2\cdot\frac{4\pi}{3}r^3}{a^3}
+        =\frac{2\cdot\frac{4\pi}{3}(\sqrt{3}a/4)^3}{a^3}
+        =\frac{\sqrt{3}\pi}{8}\approx 68.02\%`
     },
     fcc: {
-      name: 'Face-centered cubic', relation: 'Nearest neighbors touch along the face diagonal: √2 a = 4r, hence r/a = √2/4.',
-      count: 4, ratio: Math.SQRT2 / 4, volume: 1, contact: 'a face diagonal'
+      name: 'Face-centered cubic', plane: '(111)', diagram: 'fcc',
+      planeDescription: 'The (111) section is a close-packed triangular net.',
+      contactDescription: 'A face diagonal lies in this plane and contains two nearest-neighbor contact intervals.',
+      count: 4, ratio: Math.SQRT2 / 4, volume: 1,
+      contactMath: String.raw`\text{face diagonal}=\sqrt{2}\,a=4r`,
+      radiusMath: String.raw`\boxed{\frac{r}{a}=\frac{\sqrt{2}}{4}}`,
+      packingMath: String.raw`\eta=\frac{4\cdot\frac{4\pi}{3}r^3}{a^3}
+        =\frac{4\cdot\frac{4\pi}{3}(\sqrt{2}a/4)^3}{a^3}
+        =\frac{\pi}{3\sqrt{2}}\approx 74.05\%`
     },
     hcp: {
-      name: 'Hexagonal close-packed', relation: 'Basal-plane neighbors touch: a = 2r, hence r/a = 1/2. For ideal HCP, c/a = √(8/3).',
-      count: 6, ratio: 0.5, volume: 3 * Math.sqrt(3) / 2 * HCP_C_OVER_A, contact: 'the basal plane'
+      name: 'Hexagonal close-packed', plane: '(0001)', diagram: 'hcp',
+      planeDescription: 'The (0001) basal section is a close-packed triangular net.',
+      contactDescription: 'The basal lattice parameter a is the center-to-center distance between nearest neighbors.',
+      count: 6, ratio: 0.5, volume: 3 * Math.sqrt(3) / 2 * HCP_C_OVER_A,
+      contactMath: String.raw`\text{basal nearest-neighbor spacing}=a=2r`,
+      radiusMath: String.raw`\boxed{\frac{r}{a}=\frac{1}{2}}`,
+      packingMath: String.raw`\eta=\frac{6\cdot\frac{4\pi}{3}r^3}{\frac{3\sqrt{3}}{2}a^2c}
+        =\frac{6\cdot\frac{4\pi}{3}(a/2)^3}{\frac{3\sqrt{3}}{2}a^2\sqrt{\frac{8}{3}}a}
+        =\frac{\pi}{3\sqrt{2}}\approx 74.05\%`,
+      layerMath: String.raw`\text{For touching close-packed layers:}\quad
+        c=2\sqrt{a^2-\left(\frac{a}{\sqrt{3}}\right)^2}
+        \quad\Longrightarrow\quad\frac{c}{a}=\sqrt{\frac{8}{3}}`
     },
     diamond: {
-      name: 'Diamond cubic', relation: 'Nearest neighbors are separated by one quarter of a body diagonal: 2r = √3 a/4, hence r/a = √3/8.',
-      count: 8, ratio: Math.sqrt(3) / 8, volume: 1, contact: 'a quarter body diagonal'
+      name: 'Diamond cubic', plane: '(110)', diagram: 'diamond',
+      planeDescription: 'A (110) section contains a nearest-neighbor bond along a body-diagonal direction.',
+      contactDescription: 'The basis atom is displaced by one quarter of a body diagonal from its nearest neighbor.',
+      count: 8, ratio: Math.sqrt(3) / 8, volume: 1,
+      contactMath: String.raw`\text{nearest-neighbor bond}=\frac{\sqrt{3}\,a}{4}=2r`,
+      radiusMath: String.raw`\boxed{\frac{r}{a}=\frac{\sqrt{3}}{8}}`,
+      packingMath: String.raw`\eta=\frac{8\cdot\frac{4\pi}{3}r^3}{a^3}
+        =\frac{8\cdot\frac{4\pi}{3}(\sqrt{3}a/8)^3}{a^3}
+        =\frac{\pi\sqrt{3}}{16}\approx 34.01\%`
     }
   };
   const data = structures[structure];
   const packingFraction = data.count * (4 * Math.PI / 3) * data.ratio ** 3 / data.volume;
   info.innerHTML =
-    `<p><b>${data.name}:</b> ${data.relation}</p>` +
-    `<p>The displayed cell contains ${data.count} atoms; its volume is ` +
-    `${structure === 'hcp' ? '3√3 a²c/2, with c/a = √(8/3)' : 'a³'}.</p>` +
-    `<p>Packing fraction = N(4πr³/3)/V<sub>cell</sub> = ` +
-    `${data.count}(4π/3)(${data.ratio.toFixed(4)}a)³/(${data.volume.toFixed(4)}a³) ` +
-    `= <b>${(100 * packingFraction).toFixed(2)}%</b>.</p>`;
+    `<p><b>${data.name}:</b> The radius relation is obtained from nearest-neighbor contact in the highlighted derivation plane <b>${data.plane}</b>.</p>` +
+    `<div class="derivation-grid">${elementContactFigure(data.diagram, data.planeDescription)}` +
+    `<div class="derivation-steps"><p class="derivation-step"><b>1. Find a nearest-neighbor contact in the plane.</b> ${data.contactDescription}</p>` +
+    `${mathBlock(data.contactMath)}` +
+    `<p class="derivation-step"><b>2. Use the hard-sphere contact condition.</b> At tangency, the center-to-center distance equals two radii.</p>` +
+    `<p class="derivation-step"><b>3. Solve for the dimensionless radius.</b></p>` +
+    `${mathBlock(data.radiusMath)}` +
+    `${data.layerMath ? `${mathBlock(data.layerMath)}<p class="derivation-note">The ideal HCP axial ratio follows from the height of a tetrahedron formed by three touching atoms in one layer and one in the next.</p>` : ''}</div></div>` +
+    `<p>The displayed conventional cell contains <b>${data.count} atoms</b>. Its volume is</p>` +
+    `${mathBlock(structure === 'hcp' ? String.raw`V_{\mathrm{cell}}=\frac{3\sqrt{3}}{2}a^2c,\quad c/a=\sqrt{8/3}` : String.raw`V_{\mathrm{cell}}=a^3`)}` +
+    `<p>The packing fraction is the total hard-sphere volume divided by the cell volume:</p>` +
+    `${mathBlock(data.packingMath.replace(/\s+/g, ' '))}` +
+    `<p>The result is <b>${(100 * packingFraction).toFixed(2)}%</b>. This idealized calculation counts each shared boundary atom fractionally through the conventional-cell atom count.</p>`;
+  renderMath(info);
 }
 
 function makeCell(structure) {
@@ -647,6 +837,28 @@ const controls = new OrbitControls(camera, renderer.domElement);
 controls.enableDamping = true;
 controls.target.set(0, 0, 0);
 
+const axisVectors = [
+  { axis: 'X', vector: new THREE.Vector3(1, 0, 0) },
+  { axis: 'Y', vector: new THREE.Vector3(0, 1, 0) },
+  { axis: 'Z', vector: new THREE.Vector3(0, 0, 1) }
+];
+function updateAxisGizmo() {
+  const inverseCamera = camera.quaternion.clone().invert();
+  for (const { axis, vector } of axisVectors) {
+    const direction = vector.clone().applyQuaternion(inverseCamera);
+    const x = 38 + direction.x * 26, y = 39 - direction.y * 26;
+    const line = $(`axis${axis}`);
+    const label = $(`axis${axis}Label`);
+    line.setAttribute('x2', x.toFixed(1));
+    line.setAttribute('y2', y.toFixed(1));
+    label.setAttribute('x', Math.max(5, Math.min(69, x + Math.sign(direction.x || 1) * 5)).toFixed(1));
+    label.setAttribute('y', Math.max(9, Math.min(70, y - Math.sign(direction.y || 1) * 3)).toFixed(1));
+    const opacity = direction.z <= 0 ? 1 : 0.38;
+    line.setAttribute('opacity', opacity);
+    label.setAttribute('opacity', opacity);
+  }
+}
+
 scene.add(new THREE.AmbientLight(0xffffff, 0.6));
 const dl = new THREE.DirectionalLight(0xffffff, 0.8);
 dl.position.set(3, 4, 2);
@@ -775,6 +987,9 @@ function rebuildScene() {
   $('hcpPresets').hidden = !isHexagonal;
   $('cubicPresets').hidden = isHexagonal;
   $('iControl').hidden = !isHexagonal;
+  $('axisHint').textContent = isHexagonal
+    ? 'Cartesian x, y, z · planes use h, k, i, l'
+    : 'Cubic axes: x ↔ h, y ↔ k, z ↔ l';
   $('i').min = -(+$('h').value) - 3;
   $('i').max = -(+$('h').value) + 3;
   $('iV').textContent = $('i').value;
@@ -789,7 +1004,8 @@ function rebuildScene() {
     $('radiusPlane').hidden = false;
     $('radiusRelation').hidden = false;
     $('radiusPlane').textContent = `Show radius-derivation plane ${radiusPlane.label}`;
-    $('radiusRelation').textContent = `Contact geometry: ${radiusPlane.relation}`;
+    $('radiusRelation').innerHTML = `Contact geometry: ${radiusPlane.relation} ${inlineMath(radiusPlane.math)}`;
+    renderMath($('radiusRelation'));
   }
   if (structure !== displayedStructure) {
     const distance = isHexagonal ? 5 : Math.hypot(2.1, 1.8, 2.4);
@@ -990,14 +1206,11 @@ rebuildScene();
 (function animate() {
   requestAnimationFrame(animate);
   controls.update();
+  updateAxisGizmo();
   renderer.render(scene, camera);
 })();
 
-window.addEventListener('DOMContentLoaded', () => {
-  document.querySelectorAll('[data-tex]').forEach(e => {
-    try { katex.render(e.dataset.tex, e, { throwOnError: false }); } catch { e.textContent = e.dataset.tex; }
-  });
-});
+renderMath();
 </script>
 </body>
 </html>
