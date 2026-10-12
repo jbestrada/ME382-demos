@@ -20,12 +20,16 @@ Radius references:
 
 Each binary prototype's default mixed-species plane is checked against both sublattices, and the page reports the number of A/B atom centers on the selected plane. Such a mixed-species plane is not always the densest plane: for example, the close-packed FCC `{111}` layers in rock salt and zincblende contain one species at a time.
 
+### Dislocation motion
+
+The [`dislocations/index.html`](dislocations/index.html) demo introduces edge-dislocation glide in a 2D triangular lattice. Its discrete slider advances the dislocation one lattice spacing at a time and annotates the core, extra half-plane, glide plane, and Burgers circuit/vector. This is a schematic regularized elastic-displacement model, not a molecular-dynamics simulation; the circles and neighbor bonds are visual teaching aids.
+
 To preview the homepage and demos on your computer, open the repository in a terminal and run:
 
 ```sh
 python3 -m http.server 8000
 ```
 
-Then visit <http://localhost:8000> in a browser. Open the crystal structures demo from the homepage, or visit <http://localhost:8000/crystal-structures/> directly. Serving it this way is recommended because the app loads Three.js as a JavaScript module.
+Then visit <http://localhost:8000> in a browser. Open a demo from the homepage, or visit <http://localhost:8000/crystal-structures/> and <http://localhost:8000/dislocations/> directly. Serving it this way is recommended because the crystal app loads Three.js as a JavaScript module.
 
 To publish it with GitHub Pages, push this branch to GitHub, merge it into `main`, then open the repository's **Settings → Pages**. Under **Build and deployment**, choose **Deploy from a branch**, select `main` and `/(root)`, and save. GitHub will provide the published site URL on that settings page.
