@@ -137,12 +137,12 @@ input[type=number],input[type=text]{width:100%;padding:6px;border:1px solid var(
     <div id="cubicEquations" class="equations">
       <h3>Plane coordinates and spacing · cubic</h3>
       <div class="math-display" data-display="true" data-tex="\begin{aligned} hx+ky+lz&=n,\quad n\in\mathbb{Z},\\ n_{\mathrm{center}}&=\frac{h+k+l}{2},\\ d_{hkl}&=\frac{a}{\sqrt{h^2+k^2+l^2}}. \end{aligned}"></div>
-      <p class="given"><span data-tex="x,y,z"></span> are fractional coordinates along the cubic axes. Integer <span data-tex="n"></span> labels the lattice-plane family; the applet normally shows the centered representative <span data-tex="n_{\mathrm{center}}"></span>. For FCC <span data-tex="\{111\}"></span>, it instead shows a triangular lattice plane through three cell corners.</p>
+      <p class="given"><span data-tex="x,y,z"></span> are fractional coordinates along the cubic axes. Integer <span data-tex="n"></span> labels the lattice-plane family; the applet normally shows the centered representative <span data-tex="n_{\mathrm{center}}"></span>. The simple-cubic <span data-tex="(100)"></span> radius plane is placed at <span data-tex="n=0"></span> to show a corner-atom layer; FCC <span data-tex="\{111\}"></span> is placed on a triangular plane through three cell corners.</p>
     </div>
     <div id="hcpEquations" class="equations" hidden>
       <h3>Plane coordinates and spacing · hexagonal</h3>
       <div class="math-display" data-display="true" data-tex="\begin{aligned} h+k+i&=0,\\ hu+kv+lw&=n,\quad n_{\mathrm{center}}=\frac{l}{2},\\ \frac{1}{d_{hkil}^{\,2}}&=\frac{4}{3a^2}(h^2+hk+k^2)+\frac{l^2}{c^2}. \end{aligned}"></div>
-        <p class="given"><span data-tex="u,v,w"></span> are fractional coordinates along the hexagonal <span data-tex="a_1,a_2,c"></span> directions. Integer <span data-tex="n"></span> labels a lattice plane; the displayed centered representative uses <span data-tex="n_{\mathrm{center}}=l/2"></span>. The Cartesian triad is not the same as the hexagonal index directions.</p>
+        <p class="given"><span data-tex="u,v,w"></span> are fractional coordinates along the hexagonal <span data-tex="a_1,a_2,c"></span> directions. Integer <span data-tex="n"></span> labels a lattice plane; planes normally use <span data-tex="n_{\mathrm{center}}=l/2"></span>. The HCP <span data-tex="(0001)"></span> radius plane is placed at <span data-tex="n=0"></span> on the lower basal face. The Cartesian triad is not the same as the hexagonal index directions.</p>
     </div>
   </div>
 
@@ -532,13 +532,13 @@ function elementContactFigure(structure, caption) {
     },
     diamond: {
       plane: 'M83 55H261V181H83Z',
-      points: [[117.72,92],[172.28,92],[226.84,92],[137,151],[207,151]],
-      selected: [0,1], radius: 27.28, titleY: 25,
+      points: [[83,55],[261,55],[83,181],[261,181],[172,55],[172,181],[127.5,149.5],[216.5,149.5]],
+      selected: [6,2], radius: 27.28, titleY: 25,
       dimensions: [
         { start:[83,181], end:[261,181], offset:[0,19], label:'a√2', color:'orange', labelPosition:[172,215], edge:true },
         { start:[261,55], end:[261,181], offset:[20,0], label:'a', color:'blue', labelPosition:[292,121], edge:true }
       ],
-      contactOffset:[0,-12], contactLabel:[145,74]
+      contactOffset:[0,-20], contactLabel:[105,139]
     }
   };
   const diagram = diagrams[structure];
@@ -615,7 +615,9 @@ function binaryPlaneSiteCounts(structure, h, k, l, cell) {
           } else if (point.some(value => value < -1e-9 || value > 1 + 1e-9)) {
             continue;
           }
-          const planeConstant = hexagonal ? pl / 2 : (ph + pk + pl) / 2;
+          const planeConstant = hexagonal
+            ? (ph === 0 && pk === 0 ? 0 : pl / 2)
+            : (ph + pk + pl) / 2;
           if (Math.abs(ph * point[0] + pk * point[1] + pl * point[2] - planeConstant) < 1e-9) {
             found[atom.type].add(point.map(value => value.toFixed(8)).join(','));
           }
@@ -762,7 +764,7 @@ function makeCell(structure) {
         return [sign * h, sign * k, sign * l];
       },
       planeNormal: (h, k, l) => [h, (h + 2 * k) / Math.sqrt(3), l / HCP_C_OVER_A],
-      planeConstant: () => 0
+      planeConstant: (h, k, l) => h === 0 && k === 0 ? -l / 2 : 0
     };
   }
 
@@ -795,7 +797,8 @@ function makeCell(structure) {
     },
     planeNormal: (h, k, l) => [h, k, l],
     planeConstant: (h, k, l) =>
-      structure === 'fcc' && Math.abs(h) === 1 && Math.abs(k) === 1 && Math.abs(l) === 1 ? -0.5 : 0
+      (structure === 'sc' && h === 1 && k === 0 && l === 0) ||
+      (structure === 'fcc' && Math.abs(h) === 1 && Math.abs(k) === 1 && Math.abs(l) === 1) ? -0.5 : 0
   };
 }
 
@@ -1057,8 +1060,14 @@ function rebuildScene() {
   $('i').max = -(+$('h').value) + 3;
   $('iV').textContent = $('i').value;
   const isFccClosePackedPlane = structure === 'fcc' && Math.abs(h) === 1 && Math.abs(k) === 1 && Math.abs(l) === 1;
+  const isSimpleCubicAtomPlane = structure === 'sc' && Math.abs(h) === 1 && k === 0 && l === 0;
+  const isHexagonalBasalPlane = isHexagonal && h === 0 && k === 0 && l !== 0;
   $('indexHint').textContent = isHexagonal
-    ? 'Hexagonal structures use Miller–Bravais indices (h k i l), where i = −(h + k). The displayed plane passes through the cell center.'
+    ? isHexagonalBasalPlane
+      ? 'Hexagonal structures use Miller–Bravais indices (h k i l), where i = −(h + k). The basal plane is shown on the lower basal face of the cell.'
+      : 'Hexagonal structures use Miller–Bravais indices (h k i l), where i = −(h + k). The displayed plane passes through the cell center.'
+    : isSimpleCubicAtomPlane
+      ? 'The simple-cubic (100) radius plane is shown on a cell face through the corner atoms.'
     : isFccClosePackedPlane
       ? 'Cubic structures use Miller indices (h k l). The FCC {111} close-packed section is shown as a triangular lattice plane.'
       : 'Cubic structures use Miller indices (h k l). The displayed plane passes through the cell center.';
